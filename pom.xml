@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.syo</groupId>
+	<artifactId>equipment_supervision_platform</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<!-- 打包war时候开启
+	<packaging>war</packaging>
+	--> 
+
+	<name>equipment_supervision_platform</name>
+	<description>equipment supervision platform</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.11.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		
+<!-- 		<thymeleaf.version>3.0.2.RELEASE</thymeleaf.version> -->
+<!-- 		<thymeleaf-layout-dialect.version>2.1.1</thymeleaf-layout-dialect.version> -->
+
+		<thymeleaf.version>3.0.2.RELEASE</thymeleaf.version> 
+		<thymeleaf-extras-springsecurity4.version>3.0.0.RELEASE</thymeleaf-extras-springsecurity4.version> 
+		<thymeleaf-layout-dialect.version>2.2.2</thymeleaf-layout-dialect.version>
+<!-- 		<thymeleaf.layout.dialect>2.2.2</thymeleaf.layout.dialect>  -->
+	</properties>
+
+	<dependencies>
+		<dependency>  
+		    <groupId>org.springframework.boot</groupId>  
+		    <artifactId>spring-boot-devtools</artifactId>  
+		    <optional>true</optional>  
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<!-- 打包war时候开启 	移除嵌入式tomcat插件
+		    <exclusions>
+		        <exclusion>
+		            <groupId>org.springframework.boot</groupId>
+		            <artifactId>spring-boot-starter-tomcat</artifactId>
+		        </exclusion>
+		    </exclusions>
+		     -->
+		</dependency>
+		<!-- 打包war时候开启
+		<dependency>
+		    <groupId>javax.servlet</groupId>
+		    <artifactId>javax.servlet-api</artifactId>
+		    <version>3.1.0</version>
+		    <scope>provided</scope>
+		</dependency>
+		 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity4</artifactId>
+<!-- 			<VERSION>3.0.0.RELEASE</VERSION> -->
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+	        <groupId>com.oracle</groupId>
+	        <artifactId>ojdbc6</artifactId>
+	        <scope>runtime</scope>
+	        <version>11.2.0.3</version>
+	    </dependency>
+	      
+		<dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+		
+		<dependency> 
+            <groupId>org.apache.httpcomponents</groupId> 
+            <artifactId>httpclient</artifactId> 
+        </dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpasyncclient</artifactId>
+		</dependency>
+		
+		<dependency>  
+		    <groupId>org.apache.poi</groupId>  
+		    <artifactId>poi</artifactId>  
+		    <version>3.17</version>  
+		</dependency>  
+		<dependency>  
+		    <groupId>org.apache.poi</groupId>  
+		    <artifactId>poi-ooxml</artifactId>  
+		    <version>3.17</version>  
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.snmp4j</groupId>
+		    <artifactId>snmp4j</artifactId>
+		    <version>2.6.2</version>
+		</dependency>
+		
+		<!-- 部署时开启 -->	
+		<dependency>
+           <groupId>org.codehaus.jackson</groupId>
+           <artifactId>jackson-mapper-asl</artifactId>
+           <version>1.9.4</version>
+     	</dependency>
+     	
+     	<!-- security 对CAS支持 -->
+	    <dependency> 
+	      <groupId>org.springframework.security</groupId> 
+	      <artifactId>spring-security-cas</artifactId> 
+	      <exclusions>
+	        <exclusion>
+	            <groupId>org.jasig.cas.client</groupId>
+	            <artifactId>cas-client-core</artifactId>
+	        </exclusion>
+		  </exclusions>
+	    </dependency>
+		<dependency>
+		    <groupId>org.jasig.cas.client</groupId>
+		    <artifactId>cas-client-core</artifactId>
+		    <version>3.3.3-fixip</version>
+		</dependency>
+		
+		<dependency>
+            <groupId>org.activiti</groupId>
+            <artifactId>activiti-spring-boot-starter-basic</artifactId>
+            <version>5.21.0</version>
+        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.3</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-activemq</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+	</dependencies>
+	
+<!-- 部署时开启 -->	
+<!-- 	<build> -->
+<!-- 		<plugins> -->
+<!-- 			<plugin> -->
+<!-- 				<groupId>org.springframework.boot</groupId> -->
+<!-- 				<artifactId>spring-boot-maven-plugin</artifactId> -->
+<!-- 			</plugin> -->
+<!-- 			<plugin>   -->
+<!-- 			    <groupId>org.apache.maven.plugins</groupId>   -->
+<!-- 			    <artifactId>maven-compiler-plugin</artifactId>   -->
+<!-- 			    <version>3.1</version>   -->
+<!-- 			    <configuration>   -->
+<!-- 			        <verbose>true</verbose>   -->
+<!-- 			        <fork>true</fork>   -->
+<!-- 			        <executable>${JAVA8_HOME}/bin/javac</executable>   -->
+<!-- 			    </configuration>   -->
+<!-- 			</plugin> -->
+<!-- 		</plugins> -->
+<!-- 	</build> -->
+
+	<build>
+		<finalName>Spring-boot-thymeleaf3</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+
+</project>

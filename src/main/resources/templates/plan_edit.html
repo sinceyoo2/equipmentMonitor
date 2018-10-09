@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+		</style>
+		
+		<script src="assets/js/myjs/domResize.js"></script>
+		<script src="assets/js/three.js/three.min.js"></script>
+
+		<script src="assets/js/three.js/js/controls/OrbitControls.js"></script>
+		<script src="assets/js/three.js/js/libs/stats.min.js"></script>	
+		<script src="assets/js/three.js/js/Detector.js"></script>	
+		<script src="assets/js/three.js/js/controls/DragControls.js"></script>
+		<script src="assets/js/three.js/js/controls/TrackballControls.js"></script>
+		
+		<script src="assets/js/three.js/plan_edit.js"></script>
+		
+		<script src="assets/js/tree.min.js"></script>
+		<script src="assets/js/ace-elements.min.js"></script>
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		
+		<script language="javascript" th:inline="javascript">  
+		/*<![CDATA[*/ 
+			var nav = "collect";
+			var subnav;
+			
+			var planShapes = [[${planShapes}]];
+			
+			var equipments = [[${equipments}]];
+			
+			var currentEquipment = [[${equipment}]];
+			
+			function initiateDemoData(){
+				var tree_data = [[${plans}]];
+				
+				var dataSource = function(options, callback){
+					var $data = null
+					if(!("text" in options) && !("type" in options)){
+						$data = tree_data;//the root tree
+						callback({ data: $data });
+						return;
+					}
+					else if("type" in options && options.type == "folder") {
+						if("additionalParameters" in options && "children" in options.additionalParameters)
+							$data = options.additionalParameters.children || {};
+						else $data = {}//no data
+					}
+					
+					if($data != null)//this setTimeout is only for mimicking some random delay
+						setTimeout(function(){callback({ data: $data });} , parseInt(Math.random() * 500) + 200);
+				}				
+				return {'dataSource': dataSource}
+			}
+			
+			$(function() {
+				var sampleData = initiateDemoData();//see below
+				$('#tree').ace_tree({
+					dataSource: sampleData['dataSource'] ,
+					multiSelect: false,
+					cacheItems: true,
+					'open-icon' : 'ace-icon tree-minus',
+					'close-icon' : 'ace-icon tree-plus',
+					'itemSelect' : false,
+					'folderSelect': false,
+					'selected-icon' : 'ace-icon fa fa-check',
+					'unselected-icon' : 'ace-icon fa fa-times',
+					loadingHTML : '<div class="tree-loading"><i class="ace-icon fa fa-refresh fa-spin blue"></i></div>'
+					
+				});
+				$('#tree').tree('discloseVisible'); 
+				
+				init();
+				animate();
+			});	
+			
+			function planClick(planId) {
+				location.href = "plan/position/"+currentEquipment.id+"?plan="+planId;
+			}
+			
+			function back(){
+				location.href = "equipment/collect";
+			}
+			
+			function save() {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+
+				$("#positionForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+						loading.modal('hide');
+						alert(rest);
+                    }
+                });
+			}
+		/*]]>*/  	
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">数据采集</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					数据采集
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						设备位置
+						&nbsp;&nbsp;&nbsp;&nbsp;当前位置:<span th:text="${plan.lib.libName+'-->'+plan.name}"></span>
+						&nbsp;&nbsp;<a href="#" data-toggle="modal" data-target="#myModal">切换</a>
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+			<div class="row">
+				<div id="mapBox" class="col-sm-10">
+					<div id="container"></div>
+				</div>
+				<div class="col-sm-2">
+					<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">设备信息</h4>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="positionForm" action="plan/position_save" method="post">
+								<input type="hidden" name="equipmentId" th:value="${equipment.id}"/>
+								<input type="hidden" name="libNo" th:value="${plan.lib.libNo}"/>
+								<input type="hidden" name="planId" th:value="${plan.id}"/>
+								<div>
+									<label for="troubleshooter">设备类型</label>
+									<input class="form-control" id="type" th:value="${equipment.type}" readonly="readonly"/>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">设备编号</label>
+									<input class="form-control" id="equipmentNo" th:value="${equipment.equipmentNo}" readonly="readonly"/>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">设备名称</label>
+									<input class="form-control" id="equipmentName" th:value="${equipment.equipmentName}" readonly="readonly"/>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">长/宽</label>
+									
+									<div class="input-daterange input-group">
+										<input type="text" class="input-sm form-control" name="width" id="planWidth" th:value="${equipment.planWidth}"/>
+										<span class="input-group-addon">
+											<i class="fa fa-exchange"></i>
+										</span>
+										<input type="text" class="input-sm form-control" name="height" id="planHeight" th:value="${equipment.planHeight}"/>
+									</div>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">位置X/位置Y</label>
+									
+									<div class="input-daterange input-group">
+										<input type="text" class="input-sm form-control" name="x" id="planX" th:value="${equipment.planX}"/>
+										<span class="input-group-addon">
+											<i class="fa fa-exchange"></i>
+										</span>
+										<input type="text" class="input-sm form-control" name="y" id="planY" th:value="${equipment.planY}"/>
+									</div>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="save()" sec:authorize="hasRole('ROLE_ADMIN')">
+									保存
+									<i class="ace-icon fa fa-save icon-on-right bigger-110"></i>
+								</button>
+								<button type="button" class="btn btn-sm btn-info" onclick="back()">
+									返回
+									<i class="ace-icon fa fa-undo icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Modal -->
+			<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title" id="myModalLabel">切换地点</h4>
+			      </div>
+			      <div class="modal-body">
+			        <ul id="tree"></ul>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+			      </div>
+			    </div>
+			  </div>
+			</div>
+        </div>
+	</body>
+</html>

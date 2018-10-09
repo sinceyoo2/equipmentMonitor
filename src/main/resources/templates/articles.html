@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-timepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/daterangepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-timepicker.min.js"></script>
+		<script src="assets/js/moment.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		<script src="assets/js/moment-2.22.1/locale/zh-cn.js"></script>
+		
+		<script src="assets/js/bootstrap-datetimepicker.min.js"></script>
+		
+		<script language="javascript">
+		/*<![CDATA[*/ 
+			var nav = "article";
+			var subnav;
+			
+			jQuery(function($) {
+				
+				if(!ace.vars['old_ie']) $('#start, #end').datetimepicker({
+					 //format: 'MM/DD/YYYY h:mm:ss A',//use this option to display seconds
+					// language:  'zh-CN', 
+					 icons: {
+						time: 'fa fa-clock-o',
+						date: 'fa fa-calendar',
+						up: 'fa fa-chevron-up',
+						down: 'fa fa-chevron-down',
+						previous: 'fa fa-chevron-left',
+						next: 'fa fa-chevron-right',
+						today: 'fa fa-arrows ',
+						clear: 'fa fa-trash',
+						close: 'fa fa-times'
+					 }
+					}).next().on(ace.click_event, function(){
+						$(this).prev().focus();
+					});
+
+				
+			});
+			
+			$(function() {
+		        
+			});		
+			
+			function search(pageNo1, pageNo2) {
+				if(pageNo1!=null) {
+					$("#pageNo1").val(pageNo1);
+					$("#currTab").val('all');
+				}
+				if(pageNo2!=null) {
+					$("#pageNo2").val(pageNo2);
+					$("#currTab").val('mine');
+				}
+				
+				if(pageNo1==null && pageNo2==null) {
+					$("#pageNo1").val(1);
+					$("#pageNo2").val(1);
+					//$("#currTab").val('all');
+				}
+				$("#searchForm").submit();
+			}
+			
+			function toWrite() {
+				location.href = "article/writing";
+			}
+			
+			function delArticle(id) {
+				var flag = confirm("确定要删除该文章?");
+				if(!flag) {
+					return;
+				}
+				$.post("article/delete/"+id,
+					function(data){
+						alert(data);
+						location.reload();	
+				});
+			}
+		/*]]>*/	
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="article">故障知识库</a>
+			</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="row" style="position:relative;">
+            	<div>
+		            <div class="widget-box transparent" id="widget-box-13">
+						<div class="widget-header">		
+							<div class="widget-toolbar no-border pull-left">
+								<ul class="nav nav-tabs" id="myTab2">
+									<li th:classappend="${currTab eq 'all'?'active':''}">
+										<a data-toggle="tab" href="#all">全部文章</a>
+									</li>
+		
+									<li th:classappend="${currTab eq 'mine'?'active':''}">
+										<a data-toggle="tab" href="#mine">我的文章</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+		
+						<div class="widget-body">
+							<div class="widget-main padding-12 no-padding-left no-padding-right">
+								<div class="tab-content padding-2">
+									<div id="all" class="tab-pane" th:classappend="${currTab eq 'all'?'in active':''}">
+										<div class="search-results">
+											<div class="search-result" th:each="article:${allArticles}">
+												<h5 class="search-title">
+													<a th:href="|article/detail/${article.id}|" th:text="${article.title}"></a>
+												</h5>
+												<div class="space-6"></div>
+												<div class="time">
+													<i class="ace-icon fa fa-clock-o bigger-110"></i>
+													<span th:text="${#dates.format(article.createTime, 'yyyy/MM/dd HH:mm')}"></span>
+												</div>
+												<div class="space-6"></div>
+												<p class="search-content" th:text="${article.summary}"></p>
+											</div>								
+										</div>
+										<div class="search-area well well-sm text-center" th:if="${allArticles.totalPages>0}">
+<!-- 											<ul class="pagination"> -->
+<!-- 												<li class="disabled"> -->
+<!-- 													<a th:href="${allArticles.number>0?'javascript:search('+allArticles.number+',null)':'javascript:void(0)'}"> -->
+<!-- 														<i class="ace-icon fa fa-angle-double-left"></i> -->
+<!-- 													</a> -->
+<!-- 												</li>		 -->
+<!-- 												<li th:each="i:${#numbers.sequence(1, allArticles.totalPages)}" th:classappend="${i eq allArticles.number+1?'active':''}"> -->
+<!-- 													<a th:href="${i eq allArticles.number+1?'javascript:void(0)':'javascript:search('+i+',null)'}" th:text="${i}"></a> -->
+<!-- 												</li> -->
+<!-- 												<li> -->
+<!-- 													<a th:href="${allArticles.number+1==allArticles.totalPages?'javascript:void(0)':'javascript:search('+allArticles.totalPages+',null)'}"> -->
+<!-- 														<i class="ace-icon fa fa-angle-double-right"></i> -->
+<!-- 													</a> -->
+<!-- 												</li> -->
+<!-- 											</ul> -->
+											<div class="btn-group btn-corner" th:if="${allArticles.totalPages>0}">
+												<button class="btn btn-light" onclick="search(1, null)">首页</button>
+												<button class="btn btn-light" th:onclick="|search(${allArticles.number gt 1 ? allArticles.number : 1}, null)|">上一页</button>
+												<button class="btn btn-info" th:text="${'当前第'+(allArticles.number+1)+'页'}"></button>
+												<button class="btn btn-light" th:onclick="|search(${allArticles.number lt allArticles.totalPages-2 ? allArticles.number+2 : allArticles.totalPages}, null)|">下一页</button>
+												<button class="btn btn-light" th:onclick="|search(${allArticles.totalPages}, null)|">尾页</button>
+											</div>
+										</div>
+									</div>
+		
+									<div id="mine" class="tab-pane" th:classappend="${currTab eq 'mine'?'in active':''}">
+										<div class="search-results">
+											<div class="search-result profile-activity" th:each="article:${myArticles}">
+												<h5 class="search-title">
+													<a th:href="|article/detail/${article.id}|" th:text="${article.title}"></a>
+												</h5>
+												<div class="space-6"></div>
+												<div class="time">
+													<i class="ace-icon fa fa-clock-o bigger-110"></i>
+													<span th:text="${#dates.format(article.createTime, 'yyyy/MM/dd HH:mm')}"></span>
+												</div>
+												<div class="space-6"></div>
+												<p class="search-content" th:text="${article.summary}"></p>
+												
+												<div class="tools action-buttons">
+													<a th:href="|article/writing/${article.id}|" class="blue">
+														<i class="ace-icon fa fa-pencil bigger-125"></i>
+													</a>
+		
+													<a th:href="|javascript:delArticle('${article.id}')|" class="red">
+														<i class="ace-icon fa fa-times bigger-125"></i>
+													</a>
+												</div>
+											</div>
+										</div>
+										<div class="search-area well well-sm text-center" th:if="${myArticles.totalPages>0}">
+<!-- 											<ul class="pagination"> -->
+<!-- 												<li class="disabled"> -->
+<!-- 													<a th:href="${myArticles.number>0?'javascript:search(null,'+myArticles.number+')':'javascript:void(0)'}"> -->
+<!-- 														<i class="ace-icon fa fa-angle-double-left"></i> -->
+<!-- 													</a> -->
+<!-- 												</li>		 -->
+<!-- 												<li th:each="i:${#numbers.sequence(1, myArticles.totalPages)}" th:classappend="${i eq myArticles.number+1?'active':''}"> -->
+<!-- 													<a th:href="${i eq myArticles.number+1?'javascript:void(0)':'javascript:search(null,'+i+')'}" th:text="${i}"></a> -->
+<!-- 												</li> -->
+<!-- 												<li> -->
+<!-- 													<a th:href="${myArticles.number+1==myArticles.totalPages?'javascript:void(0)':'javascript:search(null,'+myArticles.totalPages+')'}"> -->
+<!-- 														<i class="ace-icon fa fa-angle-double-right"></i> -->
+<!-- 													</a> -->
+<!-- 												</li> -->
+<!-- 											</ul> -->
+											<div class="btn-group btn-corner" th:if="${myArticles.totalPages>0}">
+												<button class="btn btn-light" onclick="search(null, 1)">首页</button>
+												<button class="btn btn-light" th:onclick="|search(null, ${myArticles.number gt 1 ? myArticles.number : 1})|">上一页</button>
+												<button class="btn btn-info" th:text="${'当前第'+(myArticles.number+1)+'页'}"></button>
+												<button class="btn btn-light" th:onclick="|search(null, ${myArticles.number lt myArticles.totalPages-2 ? myArticles.number+2 : myArticles.totalPages})|">下一页</button>
+												<button class="btn btn-light" th:onclick="|search(null, ${myArticles.totalPages})|">尾页</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>		
+            	</div>
+            	
+            	<div class="col-sm-3" style="position:absolute;top:-5px;right:0px;z-index:100000">
+            		<div class="widget-box collapsed">
+						<div class="widget-header">
+							<h4 class="widget-title">操作</h4>
+
+							<span class="widget-toolbar">
+<!-- 								<a href="javascript:query()"> -->
+<!-- 									<i class="ace-icon fa fa-refresh green"></i> -->
+<!-- 								</a> -->
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-down"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="searchForm" action="article">
+							<input type="hidden" id="pageNo1" name="pageNo" th:value="${allArticles.number+1}"/>
+							<input type="hidden" id="pageNo2" name="pageNo2" th:value="${myArticles.number+1}"/>
+							<input type="hidden" id="currTab" name="currTab"/>
+								<div>
+									<label for="start">开始时间</label>
+									<input type="text" class="form-control" name="start" id="start" th:value="${start==null?'':#dates.format(start, 'yyyy/MM/dd HH:mm')}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="end">结束时间</label>
+									<input type="text" class="form-control" name="end" id="end" th:value="${end==null?'':#dates.format(end, 'yyyy/MM/dd HH:mm')}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="author">发布人账号</label>
+									<input type="text" class="form-control" name="author" id=author th:value="${author}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="end">查找内容</label>
+									<input type="text" class="form-control" name="vague" id="vague" th:value="${vague}"/>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="search()">
+									查找
+									<i class="ace-icon fa fa-arrow-right icon-on-right bigger-110"></i>
+								</button>
+								<button type="button" class="btn btn-info btn-sm" onclick="location.href='article/writing'">写文章</button>
+							</form>
+							</div>
+						</div>
+					</div>
+            	</div>
+            </div>			
+        </div>
+	</body>
+</html>

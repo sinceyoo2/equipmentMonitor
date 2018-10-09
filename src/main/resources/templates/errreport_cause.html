@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+		</style>
+		
+		<script language="javascript">
+			var nav = "errReport";
+			var subnav = "cause";
+			
+			$(function() {
+				$('#start, #end').datepicker({language:'zh-CN',format:'yyyy/mm/dd',autoclose:true});
+			});			
+			
+			function query() {
+				$("#queryForm").submit();
+			}
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="#">统计报表</a>
+			</li>
+			<li class="active">故障原因分类统计</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					报表
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						故障原因分类统计
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+			<div class="row">
+				<div class="col-sm-9">
+					<table id="simple-table" class="table  table-bordered table-hover">
+						<thead>
+							<tr>
+								<th>故障原因</th>
+								<th>总数</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.cause}"/>
+								<td th:text="${item.amount}"/>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div class="col-sm-3">
+					<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">查询条件</h4>
+
+							<span class="widget-toolbar">
+								<a href="javascript:query()">
+									<i class="ace-icon fa fa-refresh green"></i>
+								</a>
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-up"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="queryForm" action="errReport/cause">
+								<div>
+									<label for="start">开始时间</label>
+									<input type="text" class="form-control" name="start" id="start" th:value="${start==null?'':#dates.format(start, 'yyyy/MM/dd')}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="end">结束时间</label>
+									<input type="text" class="form-control" name="end" id="end" th:value="${end==null?'':#dates.format(end, 'yyyy/MM/dd')}"/>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="query()">
+									查找
+									<i class="ace-icon fa fa-arrow-right icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+        </div>
+	</body>
+</html>

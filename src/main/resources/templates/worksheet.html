@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>
+		
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+			#worksheetTable {width:800px;border:#bcbcbc}
+			#worksheetTable td {padding:5px;min-height:35px;height:35px}
+			.workSheetTitle{width:110px}
+		</style>
+		
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/  		    
+			var nav = "worksheet";
+			var subnav = "query";
+			
+			$(function() {
+				$('#start, #end').datepicker({language:'zh-CN',format:'yyyy/mm/dd',autoclose:true});
+			});
+			
+			var currentPage = [[${workSheets.number+1}]];
+			
+			function query(pageNo, pageSize) {
+				if(pageNo==currentPage) {
+					return;
+				}
+				var action = "worksheet";
+				if(pageSize!=null) {
+					action += "/"+pageSize+"/"+pageNo
+				} else if(pageNo!=null) {
+					action += "/"+pageNo
+				}
+				$("#queryForm").attr("action", action);
+				$("#queryForm").submit();
+			}
+			
+			function sheetDetail(sheetId) {
+				$(".workSheetInfo").html("&nbsp;");
+				
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'worksheet/item/'+sheetId, success:function(workSheet){
+					loading.modal('hide');
+					var infoBoxes = $(".workSheetInfo");
+// 					alert(JSON.stringify(workSheet));
+					for(var i=0; i<infoBoxes.length; i++) {
+						var infoBox = infoBoxes[i];
+						if(infoBox.id=='acceptor' || infoBox.id=='executor') {
+							if(workSheet[infoBox.id]!=null) {
+								$("#"+infoBox.id).text(workSheet[infoBox.id].login_name);
+							}				
+						} else {
+							$("#"+infoBox.id).text(workSheet[infoBox.id]);
+						}
+						
+					}
+					$("#workSheetModal").modal('show');
+				}});
+			}
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">工单管理</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					工单查询
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						工单查询结果列表
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+            <div class="row">
+            	<div class="col-sm-9">
+            		<table id="simple-table" class="table  table-bordered table-hover">
+						<thead>
+							<tr>
+								<th>工单名称</th>
+								<th>创建人</th>
+								<th>创建时间</th>	
+								<th>联系人</th>
+								<th>联系电话</th>
+								<th>工单状态</th>
+								<th>完成情况</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${workSheets.content}">
+								<td th:text="${item.title}"/>
+								<td th:text="${item.creator.name}"/>
+								<td th:text="${#dates.format(item.createTime, 'yyyy/MM/dd HH:mm')}"/>	
+								<td th:text="${item.contacts}"/>
+								<td th:text="${item.contactNumber}"/>
+								<td th:text="${item.status}"/>
+								<td th:text="${item.hasFiled?'已归档':'进行中'}"/>
+								<td>
+									<a th:href="|javascript:sheetDetail('${item.id}')|">详情</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="btn-group btn-corner" th:if="${workSheets.totalPages>0}">
+						<button class="btn btn-light" onclick="query(1)">首页</button>
+						<button class="btn" 
+								th:each="i:${#numbers.sequence(1, workSheets.totalPages)}" 
+								th:text="${i}" 
+								th:onclick="|query(${i})|" 
+								th:classappend="${i eq workSheets.number+1?'btn-info':'btn-light'}"></button>
+						<button class="btn btn-light" th:onclick="|query(${workSheets.totalPages})|">尾页</button>
+					</div>
+            	</div>
+            	<div class="col-sm-3">
+            		<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">查询条件</h4>
+
+							<span class="widget-toolbar">
+								<a href="javascript:query()">
+									<i class="ace-icon fa fa-refresh green"></i>
+								</a>
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-up"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="queryForm" action="errMsg">
+								<label>时间范围</label>
+
+								<div class="row">
+									<div class="col-xs-8 col-sm-11">
+										<div class="input-daterange input-group">
+											<input type="text" class="input-sm form-control" name="start" id="start" th:value="${condition.start==null?'':#dates.format(condition.start, 'yyyy/MM/dd')}"/>
+											<span class="input-group-addon">
+												<i class="fa fa-exchange"></i>
+											</span>
+
+											<input type="text" class="input-sm form-control" name="end" id="end"  th:value="${condition.end==null?'':#dates.format(condition.end, 'yyyy/MM/dd')}"/>
+										</div>
+									</div>
+								</div>
+								<hr />
+								<div>
+									<label for="status">工单状态</label>
+									<select class="form-control" id="status" name="status" th:value="${condition.status}">
+										<option value=""></option>
+										<option value="待受理">待受理</option>
+										<option value="已受理">已受理</option>
+										<option value="不受理">不受理</option>
+										<option value="处理中">处理中</option>
+										<option value="待确认">待确认</option>
+										<option value="已处理">已处理</option>
+										<option value="退回">退回</option>
+									</select>
+								</div>
+								<hr />
+								<div>
+									<label for="hasFiled">完成情况</label>
+									<select class="form-control" id="hasFiled" name="hasFiled" th:value="${condition.hasFiled}">
+										<option value=""></option>
+										<option value="false">进行中</option>
+										<option value="true">已归档</option>
+									</select>
+								</div>
+								<hr />
+								<div>
+									<label for="vague">查询条件</label>
+									<input class="form-control" id="vague" name="vague" th:value="${condition.vague}"/>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="query()">
+									查找
+									<i class="ace-icon fa fa-arrow-right icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+            	</div>
+            </div>	
+            
+            <div class="modal fade" id="workSheetModal" tabindex="-2" role="dialog" aria-labelledby="workSheetModalLabel">
+			  <div class="modal-dialog" role="document" style="width:800px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">工单信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row">
+				  		<table id="worksheetTable" border="1" style="width:90%;margin-left:5%">
+							<tr>
+								<td class="workSheetTitle">部门名称</td>
+								<td id="deptName" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">联系人</td>
+								<td id="contacts" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">联系电话</td>
+								<td id="contactNumber" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">日期</td>
+								<td id="createTime" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">工单标题</td>
+								<td colspan="3" id="title" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">故障描述</td>
+								<td colspan="3" style="height:110px" id="situation" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">是否受理</td>
+								<td id="acceptAudit" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">受理人</td>
+								<td id="acceptor" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">受理意见</td>
+								<td colspan="3" style="height:110px" id="acceptRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">处理人</td>
+								<td colspan="3" id="executor" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">处理情况</td>
+								<td colspan="3" style="height:110px" id="exeRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">确认审批</td>
+								<td colspan="3" id="repaireConfirm" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">确认意见</td>
+								<td colspan="3" style="height:110px" id="repaireRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">备注</td>
+								<td colspan="3" style="height:110px" id="remarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+						</table>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->		
+        </div>
+	</body>
+</html>

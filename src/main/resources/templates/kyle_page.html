@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/
+			var nav = "myOrder";
+			var subnav = [[${id}]];
+			
+			$(function() {
+				$("#kyleFrame").height($(document).height()-200);
+			});
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+			<div class="row">
+				<iframe id="kyleFrame" frameborder="0" th:src="${'/module?id='+id}" style="width:100%;height:500px"></iframe>
+			</div>
+        </div>
+	</body>
+</html>

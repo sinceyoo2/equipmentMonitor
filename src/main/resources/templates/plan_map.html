@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>
+		<script src="assets/js/myjs/domResize.js"></script>
+		<script src="assets/js/three.js/three.min.js"></script>
+
+		<script src="assets/js/three.js/js/controls/OrbitControls.js"></script>
+		<script src="assets/js/three.js/js/libs/stats.min.js"></script>	
+		<script src="assets/js/three.js/js/Detector.js"></script>	
+		<script src="assets/js/three.js/plan.js"></script>	
+		
+		<script src="assets/js/tree.min.js"></script>
+		<script src="assets/js/ace-elements.min.js"></script>
+		
+		<script language="javascript" th:inline="javascript">  
+		/*<![CDATA[*/ 
+			var nav = "data";
+			var subnav = "planMap";
+			
+			var planShapes = [[${planShapes}]];
+			
+			var equipments = [[${equipments}]];
+			
+			function initiateDemoData(){
+				//var tree_data = { '刑侦': { 'text': '刑侦', 'type': 'folder', 'additionalParameters': { 'id': '1', 'children': { '痕迹检验': { 'text': '痕迹检验', 'type': 'item', 'additionalParameters': { 'id': '10' } }, '声像技术': { 'text': '声像技术', 'type': 'item', 'additionalParameters': { 'id': '9', 'item-selected': true } } } } }, '交警': { 'text': '交警', 'type': 'folder', 'additionalParameters': { 'id': '32', 'children': { '交通事故': { 'text': '交通事故', 'type': 'item', 'additionalParameters': { 'id': '33' } }, '交通道理管理': { 'text': '交通道理管理', 'type': 'item', 'additionalParameters': { 'id': '34' } } } } } };
+				var tree_data = [[${plans}]];	;
+				
+				var dataSource = function(options, callback){
+					var $data = null
+					if(!("text" in options) && !("type" in options)){
+						$data = tree_data;//the root tree
+						callback({ data: $data });
+						return;
+					}
+					else if("type" in options && options.type == "folder") {
+						if("additionalParameters" in options && "children" in options.additionalParameters)
+							$data = options.additionalParameters.children || {};
+						else $data = {}//no data
+					}
+					
+					if($data != null)//this setTimeout is only for mimicking some random delay
+						setTimeout(function(){callback({ data: $data });} , parseInt(Math.random() * 500) + 200);
+				}
+				
+				return {'dataSource': dataSource}
+			}
+			
+			$(function() {
+				var sampleData = initiateDemoData();//see below
+				$('#tree').ace_tree({
+					dataSource: sampleData['dataSource'] ,
+					multiSelect: false,
+					cacheItems: true,
+					'open-icon' : 'ace-icon tree-minus',
+					'close-icon' : 'ace-icon tree-plus',
+					'itemSelect' : false,
+					'folderSelect': false,
+					'selected-icon' : 'ace-icon fa fa-check',
+					'unselected-icon' : 'ace-icon fa fa-times',
+					loadingHTML : '<div class="tree-loading"><i class="ace-icon fa fa-refresh fa-spin blue"></i></div>'
+					
+				}).on('click', function (e,result) {
+					 //$("[class='icon-caret ace-icon tree-plus']").click();
+					 //alert(result);
+// 					 for(var f in e) {
+// 						 alert(f+"\n"+e[f]);
+// 					 }
+                });
+				$('#tree').tree('discloseVisible'); 
+
+				
+				
+				
+				init();
+				animate();
+			});	
+			
+			function planClick(planId) {
+				location.href = "/plan/map/"+planId;
+			}
+			
+			function openEquipment(equipment) {
+				$("#id, #equipmentName, #equipmentNo, #remarks, #vendor, #model, #type").val("");
+				
+				if(equipment!=null) {
+					$("#id").val(equipment.id);					
+					$("#equipmentName").val(equipment.equipmentName);
+					$("#equipmentNo").val(equipment.equipmentNo);
+					$("#remarks").val(equipment.remarks);
+					$("#vendor").val(equipment.vendor);
+					$("#model").val(equipment.model);
+					$("#type").val(equipment.type);					
+					
+				}
+				$("#equipmentModal").modal('show');
+			}
+			
+			
+		/*]]>*/  	
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li>
+				<a href="javascript:void(0)">数据处理</a>
+			</li>
+			<li class="active">室内地图</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					图书馆室内地图
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						<span th:text="${plan.lib.libName+'--'+plan.name}">祖庙分馆2楼</span>
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+			<div class="row">
+				<div id="mapBox" class="col-sm-10">
+					<div id="container"></div>
+				</div>
+				<div class="col-sm-2">
+					<ul id="tree"></ul>
+				</div>
+			</div>
+			
+			<div class="modal fade" id="equipmentModal" tabindex="-2" role="dialog" aria-labelledby="equipmentModalLabel">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">设备信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  	<form id="equipmentForm" action="equipment/equipment_save" method="post" class="form-horizontal" role="form">
+				  		<input type="hidden" name="id" id="id"/>
+				  		<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="type"> 配置名称 </label>
+							<div class="col-sm-8">
+								<input type="text" id="type" name="type" placeholder="设备名称" class="col-xs-6 col-sm-6" style="margin-right:5px" />
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="equipmentName"> 名称/编码 </label>
+							<div class="col-sm-10">
+								<input type="text" id="equipmentName" name="equipmentName" placeholder="设备名称" class="col-xs-6 col-sm-6" style="margin-right:5px" />
+								<input type="text" id="equipmentNo" name="equipmentNo" placeholder="设备编码" class="col-xs-4 col-sm-4" />
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="vendor"> 品牌/型号</label>
+							<div class="col-sm-10">
+								<input type="text" id="vendor" name="vendor" placeholder="品牌" class="col-xs-6 col-sm-6" style="margin-right:5px" />
+								<input type="text" id="model" name="model" placeholder="型号" class="col-xs-4 col-sm-4" />
+							</div>
+						</div>
+						<hr/>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="remarks"> 备注 </label>
+							<div class="col-sm-10">
+								<textarea class="form-control" id="remarks" name="remarks" style="width:85%" ></textarea>
+							</div>
+						</div>
+					</form>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+        </div>
+	</body>
+</html>

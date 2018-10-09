@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/jquery-ui.custom.min.css" />
+		<link rel="stylesheet" href="assets/css/chosen.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-timepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/daterangepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-colorpicker.min.css" />
+		
+		<link rel="stylesheet" href="assets/js/editor.md-master/css/editormd.css"/>
+		<script src="assets/js/editor.md-master/editormd.js"></script>
+		
+		<script src="assets/js/ace-elements.min.js"></script>
+		<script src="assets/js/bootstrap-tag.min.js"></script>
+		
+		<!-- <script th:inline="javascript">  
+		/*<![CDATA[*/  		  
+		    var no_file = [[${#lists.size(article.attachments)>0?article.attachments[0].fileName:'没有附件 ...'}]];		   	  
+		/*]]>*/  
+		</script> -->
+		
+		<script language="javascript">
+			var nav = "article";
+			var subnav;
+			$(function() {
+				editormd("my-editormd",{
+					width:"100%",
+					height:$(window).height()-210,
+					syncScrolling:"single",
+					path:"assets/js/editor.md-master/lib/",
+					saveHTMLToTextarea:true,
+					toolbarIcons:function(){
+						return ["undo","redo","|","bold","del","italic","|","h1","h2","|","list-ul","list-ol","hr","|",
+							"link","reference-link","image","code","code-block","table","datetime","html-entities","|",
+							"goto-line","watch","preview","search","||",
+							"submitButton","backButton"];
+					},
+					toolbarCustomIcons:{
+						submitButton:'<button type="button" class="btn btn-danger" onclick="openPublish()">发布文章</button>',
+						backButton:'<button type="button" class="btn btn-default" onclick="location.href=\'article\'">返回</button>'
+					},
+					/**上传图片相关配置如下*/
+					imageUpload : true,
+					imageFormats : ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+					imageUploadURL : "article/editormdPic/",//注意你后端的上传图片服务地址
+				});
+				
+				
+				/* $('#attachment').ace_file_input({
+					//no_file:'没有附件 ...',
+					no_file: no_file,
+					btn_choose:'选择文件',
+					btn_change:'更改文件',
+					droppable:false,
+					onchange:null,
+					thumbnail:false
+				}); */
+				
+				$('#attachments').ace_file_input({
+					style: 'well',
+					btn_choose: '选择文件',
+					btn_change: null,
+					no_icon: 'ace-icon fa fa-cloud-upload',
+					droppable: true,
+					thumbnail: 'small'//large | fit
+					//,icon_remove:null//set null, to hide remove/reset button
+					/**,before_change:function(files, dropped) {
+						//Check an example below
+						//or examples/file-upload.html
+						return true;
+					}*/
+					/**,before_remove : function() {
+						return true;
+					}*/
+					,
+					preview_error : function(filename, error_code) {
+						//name of the file that failed
+						//error_code values
+						//1 = 'FILE_LOAD_FAILED',
+						//2 = 'IMAGE_LOAD_FAILED',
+						//3 = 'THUMBNAIL_FAILED'
+						//alert(error_code);
+					}
+			
+				}).on('change', function(){
+					//console.log($(this).data('ace_input_files'));
+					//console.log($(this).data('ace_input_method'));
+				});
+				
+				
+				$('#vagueTags').tag({placeholder:$('#vagueTags').attr('placeholder')});
+			});
+			
+			
+			
+			function openPublish() {
+				$("#content").val($('#my-editormd-doc').val());
+				$("#articleModal").modal('show');
+			}
+			
+			function publish(state) {
+// 				alert($('input[name="vagueTags"]').val());
+				
+				var items = $("*[check='notBlank']");
+				for(var i=0; i<items.length; i++) {
+					var value = $(items[i]).val();
+					if(value==null || $.trim(value)=='') {
+						alert("请输入："+$(items[i]).attr("placeholder"));
+						return;
+					}
+				}
+				$("#state").val(state);
+// 				alert($(".editormd-preview-container img").length);
+				var imgs = $(".editormd-preview-container img");
+				var contentResource = "";
+				for(var i=0; i<imgs.length; i++) {
+					contentResource += $(imgs[i]).attr("src");
+					if(i<imgs.length-1) {
+						contentResource += ",";
+					}
+				}
+				$("#contentResource").val(contentResource);
+// 				return;
+				$("#articleForm").submit();
+			}
+			
+			function delAttachment(id) {
+				var flag = confirm("确定要删除该附件?");
+				if(!flag) {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.post("article/delete_attach/"+id,
+					function(data){
+						loading.modal('hide');
+						if(data=='操作成功') {
+							$("#attach_"+id).remove();
+						}
+						
+						alert(data);
+				});
+			}
+			
+			
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="article">故障知识库</a>
+			</li>
+			<li class="active">编辑文章</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+			<div class="row">
+				<div id="my-editormd">
+					<textarea id="my-editormd-doc" name="my-editormd-doc" style="display:none" th:text="${article.content}"></textarea>
+					<textarea id="my-editormd-code" name="my-editormd-code" style="display:none"></textarea>
+				</div>
+			</div>
+
+			<div class="modal fade" id="articleModal" tabindex="-2" role="dialog" aria-labelledby="articleModalLabel">
+			  <div class="modal-dialog" role="document" style="width:600px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">知识库文章信息</h4>
+			      </div>
+			      <div class="modal-body">	
+			      	<div class="row" style="padding:0px 15px">
+			      	<form id="articleForm" action="article/save" method="post" enctype="multipart/form-data">
+			      		<input type="hidden" name="id" th:value="${article.id}" value=""/>
+						<input type="hidden" name="content" id="content" check="notBlank" placeholder="文章内容"/>
+						<input type="hidden" name="state" id="state"/>
+						<input type="hidden" name="contentResource" id="contentResource"/>
+			      		<div>
+							<label for="tag">故障编号</label>
+							<input class="form-control" type="text" id="tag" name="tag" placeholder="故障编号" th:value="${article.tag}" autocomplete="off" check="notBlank"/>
+						</div>
+						<hr/>
+						<div>
+							<label for="title">标题/故障问题</label>
+							<input class="form-control" type="text" id="title" name="title" placeholder="标题/故障问题" th:value="${article.title}" autocomplete="off" check="notBlank"/>
+						</div>
+						<hr/>
+						<div>
+							<label for="summary">摘要内容</label>
+							<textarea class="form-control" id="summary" name="summary" placeholder="摘要内容" style="height:70px" th:text="${article.summary}"></textarea>
+						</div>
+						<hr/>
+						<label for="vagueTags">分类标签</label>
+						<div>
+							<input class="form-control" id="vagueTags" name="vagueTags" style="width:100%" placeholder="输入自定义分类标签" th:value="${article.vagueTags}"/>
+						</div>
+						<!-- <hr/>
+						<div>
+							<label for="attachment">附件</label>
+							<input type="file" id="attachment" name="attachment" />
+						</div> -->
+						<hr/>
+						<div>
+							<label for="attachment">附件</label>
+							<ul th:if="${article.attachments ne null and #lists.size(article.attachments) gt 0}">
+								<li th:each="item:${article.attachments}" th:id="${'attach_'+item.id}">
+									<div>
+										<a th:href="${'article/download/'+item.id}" th:text="${item.fileName}" target="_blank"></a>
+										<a th:href="|javascript:delAttachment('${item.id}')|" class="red">
+											<i class="ace-icon fa fa-times bigger-125"></i>
+										</a>
+									</div>
+								</li>
+							</ul>
+							<input multiple="" type="file" id="attachments" name="atts" />
+						</div>
+					</form>
+			      	</div>	   		      	   	
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-info btn-sm" onclick="publish(0)">存草稿</button>
+					<button type="button" class="btn btn-info btn-sm" onclick="publish(1)">发布</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+        </div>
+	</body>
+</html>

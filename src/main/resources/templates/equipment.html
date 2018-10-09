@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		<script src="assets/js/moment.min.js"></script>
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+		</style>
+		
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/  		    
+			var nav = "collect";
+			var subnav;
+			
+			$(function() {
+// 				$("#serverPositionModal").modal('show');
+				$('#start, #end').datepicker({language:'zh-CN',format:'yyyy/mm/dd',autoclose:true});
+			});
+			
+			var currentPage = [[${equipments.number+1}]];
+			
+			function query(pageNo, pageSize) {
+				if(pageNo==currentPage) {
+					return;
+				}
+				var action = "equipment/collect";
+				if(pageSize!=null) {
+					action += "/"+pageSize+"/"+pageNo
+				} else if(pageNo!=null) {
+					action += "/"+pageNo
+				}
+				$("#queryForm").attr("action", action);
+				$("#queryForm").submit();
+			}
+			
+			function setForm(equipment) {				
+				$("#id, #equipmentName, #equipmentNo, #remarks, #vendor, #model, #type").val("");
+				
+				if(equipment!=null) {
+					$("#id").val(equipment.id);
+					
+					$("#equipmentName").val(equipment.equipmentName);
+					$("#equipmentNo").val(equipment.equipmentNo);
+					$("#remarks").val(equipment.remarks);
+					$("#vendor").val(equipment.vendor);
+					$("#model").val(equipment.model);
+					$("#type").val(equipment.type);			
+					$("#ownerAccount").val(equipment.ownerAccount);
+					
+				}
+				
+			}
+			
+			function edit(id) {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'equipment/item/'+id, success:function(equipment){
+					loading.modal('hide');
+					setForm(equipment);
+					$("#equipmentModal").modal('show');
+				}});
+				
+			}	
+		/*]]>*/
+		</script>
+		
+		<script language="javascript" sec:authorize="hasRole('ROLE_ADMIN')">
+		/*<![CDATA[*/
+			function add() {
+				setForm();
+				$("#equipmentModal").modal('show');
+			}
+			
+			function save() {
+				var items = $("*[check='notBlank']");
+				for(var i=0; i<items.length; i++) {
+					var value = $(items[i]).val();
+					if(value==null || $.trim(value)=='') {
+						alert("请输入："+$(items[i]).attr("placeholder"));
+						return;
+					}
+				}
+				
+				$("#equipment").modal('hide');
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+
+				$("#equipmentForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+                       //alert("我在提交表单成功之后被调用");
+						loading.modal('hide');
+						alert(rest);
+						location.reload();
+
+                    }
+                });
+			}
+			
+			function del(id) {	
+				var flag = confirm("确定要删除当前设备吗?");
+				if(!flag) {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'equipment/equipment_del/'+id, success:function(rest){
+					loading.modal('hide');
+					alert(rest);
+					location.reload();
+				}});
+			}
+			
+			function editPosition(id, type, startU, endU) {			
+				if(type=="服务器") {	
+					$("#libNo, #rowName, #cabinetId, #startU, #endU").val("");
+					var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+					$.ajax({url:'equipment/cabinet_server/'+id, success:function(cabinet){
+						loading.modal('hide');
+						if(cabinet!=null && cabinet.lib!=null) {
+							$("#libNo").val(cabinet.lib.libNo);
+							$("#rowName").val(cabinet.rowName);
+							findCabinets(cabinet.id);
+							//$("#cabinetId").val(cabinet.id);
+							if(startU>0 && endU>0) {
+								$("#startU").val(startU);
+								$("#endU").val(endU);
+							}
+						}
+						$("#serverId").val(id);
+						$("#serverPositionModal").modal('show');
+					}});
+				} else {
+					//alert("目前只支持服务器位置维护。。");
+					location.href = "plan/position/"+id;
+				}	
+			}
+			
+			function saveServerPosition() {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$("#server_positionForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+                       //alert("我在提交表单成功之后被调用");
+						loading.modal('hide');
+						alert(rest);
+						location.reload();
+                    }
+                });	
+			}
+			
+			function findCabinets(selecedValue) {		
+				var libNo = $("#libNo").val();
+				if(libNo==null || $.trim(libNo)=='') {
+					return;
+				}
+				var rowName = $("#rowName").val();
+				if(rowName==null || $.trim(rowName)=='') {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'equipment/cabinet_row_lib', type:'post', data:{libNo:libNo, rowName:rowName}, success:function(rest){
+					loading.modal('hide');
+					$("#cabinetId").html("");
+					$("#cabinetId").append('<option value=""></option>');
+					for(var i=1; i<rest.length; i++) {
+						if(selecedValue!=null && selecedValue==rest[i].id) {
+							$("#cabinetId").append('<option value="'+rest[i].id+'" selected="selected">'+rest[i].name+'</option>');
+						} else {
+							$("#cabinetId").append('<option value="'+rest[i].id+'">'+rest[i].name+'</option>');
+						}
+						
+					}
+				}});
+			}
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">数据采集</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					数据采集
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						设备列表
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+            <div class="row">
+            	<div class="col-sm-9">
+            		<table id="simple-table" class="table  table-bordered table-hover">
+						<thead>
+							<tr>
+								<th>设备类型</th>
+								<th>设备编码</th>
+								<th>设备名称</th>
+								<th>品牌</th>
+								<th>型号</th>
+								<th>所在位置</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${equipments.content}">
+								<td th:text="${item.type}"/>
+								<td th:text="${item.equipmentNo}"/>
+								<td th:text="${item.equipmentName}"/>
+								<td th:text="${item.vendor}"/>
+								<td th:text="${item.model}"/>
+								<td th:text="${item.lib eq null ? '未知位置信息' : item.lib.libName}"/>
+								<td>
+									<div class="hidden-xs btn-group">
+										<button class="btn btn-xs btn-info" th:onclick="|edit('${item.id}')|">
+											<i class="ace-icon fa fa-pencil bigger-120"></i>
+										</button>
+										
+										<button class="btn btn-xs" th:onclick="|del('${item.id}')|" sec:authorize="hasRole('ROLE_ADMIN')">
+											<i class="ace-icon fa fa-trash-o bigger-120"></i>
+										</button>
+										
+										<button class="btn btn-xs btn-success" th:onclick="|editPosition('${item.id}','${item.type}', ${item.startU}, ${item.endU})|" sec:authorize="hasRole('ROLE_ADMIN')">
+											<i class="ace-icon fa fa-map-marker bigger-120"></i>
+										</button>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="btn-group btn-corner" th:if="${equipments.totalPages>0}">
+						<button class="btn btn-light" onclick="query(1)">首页</button>
+						<button class="btn btn-light" th:onclick="|query(${equipments.number gt 1 ? equipments.number : 1})|">上一页</button>
+						<button class="btn btn-info" th:text="${'当前第'+(equipments.number+1)+'页'}"></button>
+						<button class="btn btn-light" th:onclick="|query(${equipments.number lt equipments.totalPages-2 ? equipments.number+2 : equipments.totalPages})|">下一页</button>
+						<button class="btn btn-light" th:onclick="|query(${equipments.totalPages})|">尾页</button>
+					</div>
+<!-- 					<div class="btn-group btn-corner" th:if="${equipments.totalPages>0}"> -->
+<!-- 						<button class="btn btn-light" onclick="query(1)">首页</button> -->
+<!-- 						<button class="btn"  -->
+<!-- 								th:each="i:${#numbers.sequence(1, equipments.totalPages)}"  -->
+<!-- 								th:text="${i}"  -->
+<!-- 								th:onclick="|query(${i})|"  -->
+<!-- 								th:classappend="${i eq equipments.number+1?'btn-info':'btn-light'}"></button> -->
+<!-- 						<button class="btn btn-light" th:onclick="|query(${equipments.totalPages})|">尾页</button> -->
+<!-- 					</div> -->
+            	</div>
+            	<div class="col-sm-3">
+            		<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">查询条件</h4>
+
+							<span class="widget-toolbar">
+								<a href="javascript:query()">
+									<i class="ace-icon fa fa-refresh green"></i>
+								</a>
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-up"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="queryForm" action="equipment/collect">
+								<label for="troubleshooter">采集时间</label>
+								<div class="row">
+									<div class="col-xs-8 col-sm-11">
+										<div class="input-daterange input-group">
+											<input type="text" class="input-sm form-control" name="start" id="start" th:value="${start==null?'':#dates.format(start, 'yyyy/MM/dd')}" autocomplete="off"/>
+											<span class="input-group-addon">
+												<i class="fa fa-exchange"></i>
+											</span>
+
+											<input type="text" class="input-sm form-control" name="end" id="end"  th:value="${end==null?'':#dates.format(end, 'yyyy/MM/dd')}" autocomplete="off"/>
+										</div>
+									</div>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">设备类型</label>
+									<select class="form-control" id="type_search" name="type" th:value="${type}">
+										<option value=""></option>
+										<option value="服务器" th:selected="${type eq '服务器'}">服务器</option>
+										<option value="交换机" th:selected="${type eq '交换机'}">交换机</option>
+										<option value="检索机" th:selected="${type eq '检索机'}">检索机</option>
+										<option value="上网机" th:selected="${type eq '上网机'}">上网机</option>
+										<option value="自助借还机" th:selected="${type eq '自助借还机'}">自助借还机</option>
+										<option value="自助打印终端" th:selected="${type eq '自助打印终端'}">自助打印终端</option>
+										<option value="数字公告板" th:selected="${type eq '数字公告板'}">数字公告板</option>
+										<option value="触控一体机" th:selected="${type eq '触控一体机'}">触控一体机</option>
+										<option value="智能书架控制器" th:selected="${type eq '智能书架控制器'}">智能书架控制器</option>
+										<option value="门禁" th:selected="${type eq '门禁'}">门禁</option>
+										<option value="摄像抢" th:selected="${type eq '摄像抢'}">摄像抢</option>
+										<option value="其他" th:selected="${type eq '其他'}">其他</option>
+									</select>
+								</div>
+								<hr />
+								<div>
+									<label for="msgSource">查找内容</label>
+									<input class="form-control" id="vague" name="vague" placeholder="查找内容" th:value="${vague}" autocomplete="off"/>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="query()">
+									查找
+									<i class="ace-icon fa fa-search icon-on-right bigger-110"></i>
+								</button>
+								<button type="button" class="btn btn-sm btn-info" onclick="add()" sec:authorize="hasRole('ROLE_ADMIN')">
+									添加
+									<i class="ace-icon fa fa-pencil icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+            	</div>
+            </div>	
+            
+            <div class="modal fade" id="equipmentModal" tabindex="-2" role="dialog" aria-labelledby="equipmentModalLabel">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">设备信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  	<form id="equipmentForm" action="equipment/equipment_save" method="post" class="form-horizontal" role="form">
+				  		<input type="hidden" name="id" id="id"/>
+				  		<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="type"> 设备类型 </label>
+							<div class="col-sm-8">
+								<select class="form-control" id="type" name="type" check="notBlank" placeholder="设备类型">
+									<option value=""></option>
+									<option value="服务器">服务器</option>
+									<option value="交换机">交换机</option>
+									<option value="检索机">检索机</option>
+									<option value="上网机">上网机</option>
+									<option value="自助借还机">自助借还机</option>
+									<option value="自助打印终端">自助打印终端</option>
+									<option value="数字公告板">数字公告板</option>
+									<option value="触控一体机">触控一体机</option>
+									<option value="智能书架控制器">智能书架控制器</option>
+									<option value="门禁">门禁</option>
+									<option value="摄像抢">摄像抢</option>
+									<option value="其他">其他</option>
+								</select>
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="type"> 负责人 </label>
+							<div class="col-sm-8">
+								<input type="text" id="ownerAccount" name="ownerAccount" placeholder="设备负责人账号" class="col-xs-12 col-sm-12"/>
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="equipmentName"> 名称/编码 </label>
+							<div class="col-sm-10">
+								<input type="text" id="equipmentName" name="equipmentName" placeholder="设备名称" class="col-xs-6 col-sm-6" style="margin-right:5px" check="notBlank" />
+								<input type="text" id="equipmentNo" name="equipmentNo" placeholder="设备编码" class="col-xs-4 col-sm-4" check="notBlank" />
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="vendor"> 品牌/型号</label>
+							<div class="col-sm-10">
+								<input type="text" id="vendor" name="vendor" placeholder="品牌" class="col-xs-6 col-sm-6" style="margin-right:5px" check="notBlank" />
+								<input type="text" id="model" name="model" placeholder="型号" class="col-xs-4 col-sm-4" check="notBlank" />
+							</div>
+						</div>
+						<hr/>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="remarks"> 备注 </label>
+							<div class="col-sm-10">
+								<textarea class="form-control" id="remarks" name="remarks" style="width:85%"></textarea>
+							</div>
+						</div>
+					</form>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+		        	<button id="createScheduling" type="button" class="btn btn-primary" onclick="save()" sec:authorize="hasRole('ROLE_ADMIN')">保存</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+			<div class="modal fade" id="serverPositionModal" tabindex="-2" role="dialog" aria-labelledby="serverPositionModalLabel" sec:authorize="hasRole('ROLE_ADMIN')">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">服务器位置信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  	<form id="server_positionForm" action="equipment/server_position_save" method="post" class="form-horizontal" role="form">
+				  		<input type="hidden" name="serverId" id="serverId"/>
+				  		<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="lib"> 所在图书馆 </label>
+							<div class="col-sm-8">
+								<select class="form-control" id="libNo" name="libNo" onchange="findCabinets()">
+									<option value=""></option>
+									<option th:each="lib:${libs}" th:value="${lib.libNo}" th:text="${lib.libName}"/>
+								</select>
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="equipmentName"> 排号/机柜 </label>
+							<div class="col-sm-10">
+								<select id="rowName" class="col-xs-5 col-sm-5" style="margin-right:5px" onchange="findCabinets()">
+									<option value=""></option>
+									<option value="A排">A排</option>
+									<option value="B排">B排</option>
+								</select>
+								<select id="cabinetId" name="cabinetId" class="col-xs-5 col-sm-5">
+									
+								</select>
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="equipmentName"> 机架位置 </label>
+							<div class="col-sm-10">
+								<div class="input-daterange input-group col-sm-10">
+									<input type="text" class="input-sm form-control" name="startU" id="startU"/>
+									<span class="input-group-addon">
+										<i class="fa fa-underline"></i>
+									</span>
+									<span class="input-group-addon">
+										<i class="fa fa-exchange"></i>
+									</span>
+									<input type="text" class="input-sm form-control" name="endU" id="endU"/>
+									<span class="input-group-addon">
+										<i class="fa fa-underline"></i>
+									</span>
+								</div>
+							</div>
+						</div>
+						
+					</form>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+		        	<button id="createScheduling" type="button" class="btn btn-primary" onclick="saveServerPosition()">保存</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->		
+        </div>
+	</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/chosen.min.css" />
+		
+		<script src="assets/js/bootstrap-tag.min.js"></script>
+		<script src="assets/js/chosen.jquery.min.js"></script>
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		<script src="assets/js/jquery.jqGrid.min.js"></script>
+		
+		<style type="text/css">
+			.tags {width:85%;height:35px}
+			.chosen-container-multi{line-height:33px}
+		</style>
+		
+		<script language="javascript">
+		/*<![CDATA[*/
+			var nav = "worksheet";
+			var subnav = "running";
+			
+			
+			
+			
+		/*]]>*/
+		</script>
+		
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">工单管理</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					代办工作
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						代办工作列表
+					</small>
+				</h1>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left tableTools-container">
+					<form class="form-search-config" action="pingMonitor" method="get">
+						<span class="input-icon">
+							<input th:value="${vague}" type="text" placeholder="查找 ..." class="nav-search-input" id="vague" name="vague" autocomplete="off" />
+							<i class="ace-icon fa fa-search nav-search-icon"></i>
+						</span>
+						<input class="btn btn-info btn-xs" type="submit" value="查找"/>
+					</form>
+				</div>
+			</div>
+			<div class="row">
+				<table id="simple-table" class="table  table-bordered table-hover">
+					<thead>
+						<tr>
+							<th>流程名称</th>
+							<th>任务名称</th>
+							<th>标题</th>
+							<th>流程创建时间</th>
+							<th>任务创建时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="item:${workSheets}">
+							<td th:text="${item.processName}"/>
+							<td th:text="${item.task.name}"/>
+							<td th:text="${item.title}"/>
+							<td th:text="${#dates.format(item.createTime, 'yyyy/MM/dd HH:mm')}"/>		
+							<td th:text="${#dates.format(item.task.createTime, 'yyyy/MM/dd HH:mm')}"/>	
+							<td>
+								<a th:href="${'worksheet/process_item/'+item.task.id}">打开</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>			
+				
+			</div>
+        </div>
+	</body>
+</html>

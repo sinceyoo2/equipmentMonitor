@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		
+		<style type="text/css">
+			#worksheetTable {width:800px;border:#bcbcbc}
+			#worksheetTable td {height:35px;padding:5px;min-height:45px;height:45px}
+		</style>
+
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/
+			var nav = "index";
+			var subnav;
+			
+			var taskId = [[${taskId}]];		
+			var taskKey = [[${taskKey}]];		
+			
+			$(function() {
+		        if(taskKey!=null) {
+		        	var step = $("#"+taskKey).attr("data-step");
+		        	for(var i=2; i<=parseInt(step); i++) {
+		        		$("#stepBox li[data-step='"+i+"']").addClass("active");
+		        	}
+		        }
+			});			
+			
+			function newProcess() {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+
+				$("#worksheetForm").attr("action","worksheet/new");
+				if(taskId!=null) {
+					$("#worksheetForm").attr("action","worksheet/complete/"+taskId);
+				}
+				
+				$("#worksheetForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+                       //alert("我在提交表单成功之后被调用");
+						loading.modal('hide');
+						alert(rest);
+						//location.reload();
+                    }
+                });
+			}
+			/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div>&nbsp;</div>
+            <div>
+				<ul id="stepBox" class="steps">
+					<li id="usertask0" data-step="1" class="active">
+						<span class="step">1</span>
+						<span class="title">提交工单</span>
+					</li>
+					
+					<li id="usertask1" data-step="2">
+						<span class="step">2</span>
+						<span class="title">受理审批</span>
+					</li>
+					
+					<li id="usertask2" data-step="3">
+						<span class="step">3</span>
+						<span class="title">处理人接单</span>
+					</li>
+					
+					<li id="usertask3" data-step="4">
+						<span class="step">4</span>
+						<span class="title">处理人提交</span>
+					</li>
+					
+					<li id="usertask4" data-step="5">
+						<span class="step">5</span>
+						<span class="title">处理结果确认</span>
+					</li>
+					
+					<li id="usertask5" data-step="6">
+						<span class="step">6</span>
+						<span class="title">工单归档</span>
+					</li>
+				</ul>
+			</div>
+			<hr/>
+			<div class="center">
+		        <button id="createScheduling" type="button" class="btn btn-primary" onclick="newProcess()">下一步</button>
+		        <button type="button" class="btn btn-default" data-dismiss="modal">返回</button>
+			</div>
+			<hr/>
+			<div class="row">
+				<form id="worksheetForm" method="post">
+				<input type="hidden" name="id" th:value="${workSheet.id}"/>
+				<input type="hidden" name="errorMessage.id" th:value="${workSheet.errorMessage.id}"/>
+				<table id="worksheetTable" border="1" align="center">
+					<tr>
+						<td>部门名称</td>
+						<td>
+							<input type="text" id="deptName" name="deptName" class="col-xs-12 col-sm-12" autocomplete="off" act:asText="${workSheet.deptName}"/>
+						</td>
+						<td>联系人</td>
+						<td>
+							<input type="text" id="contacts" name="contacts" class="col-xs-12 col-sm-12" autocomplete="off" act:asText="${workSheet.contacts}"/>
+						</td>
+					</tr>
+					<tr>
+						<td>联系电话</td>
+						<td>
+							<input type="text" id="contactNumber" name="contactNumber" class="col-xs-12 col-sm-12" autocomplete="off" act:asText="${workSheet.contactNumber}" />
+						</td>
+						<td>日期</td>
+						<td th:text="${workSheet.createTime==null?'':#dates.format(workSheet.createTime,'yyyy-MM-dd HH:mm')}"></td>
+					</tr>
+					<tr>
+						<td>工单标题</td>
+						<td colspan="3">
+							<input type="text" id="title" name="title" class="col-xs-12 col-sm-12 " autocomplete="off" act:asText="${workSheet.title}"/>
+						</td>
+					</tr>
+					<tr>
+						<td>故障描述</td>
+						<td colspan="3" style="height:110px">
+							<textarea  class="col-xs-12 col-sm-12" style="height:100px" id="situation" name="situation" act:asText="${workSheet.situation}"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>是否受理</td>
+						<td colspan=>
+							<select class="col-xs-6 col-sm-6" id="acceptAudit" name="acceptAudit" act:asText="${workSheet.acceptAudit}">
+								<option vallue=""></option>
+								<option value="受理">受理</option>
+								<option value="不受理">不受理</option>
+							</select>
+						</td>
+						<td>受理人</td>
+						<td>
+							<span th:text="${workSheet.acceptor==null?'':workSheet.acceptor.name}"></span>
+							<span th:text="${workSheet.acceptTime==null?'':#dates.format(workSheet.acceptTime,'yyyy-MM-dd HH:mm')}"></span>
+						</td>
+					</tr>
+					<tr>
+						<td>受理意见</td>
+						<td colspan="3" style="height:110px">
+							<textarea  class="col-xs-12 col-sm-12" style="height:100px" id="acceptRemarks" name="acceptRemarks" act:asText="${workSheet.acceptRemarks}"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>处理人</td>
+						<td colspan="3" th:text="${workSheet.executor==null?'':workSheet.executor.name}"></td>
+					</tr>
+					<tr>
+						<td>处理情况</td>
+						<td colspan="3" style="height:110px">
+							<textarea  class="col-xs-12 col-sm-12" style="height:100px" id="exeRemarks" name="exeRemarks" act:asText="${workSheet.exeRemarks}"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>确认审批</td>
+						<td colspan="3">
+							<select class="col-xs-3 col-sm-3" id="repaireConfirm" name="repaireConfirm" act:asText="${workSheet.repaireConfirm}">
+								<option vallue=""></option>
+								<option value="通过">通过</option>
+								<option value="退回">退回</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>确认意见</td>
+						<td colspan="3" style="height:110px">
+							<textarea  class="col-xs-12 col-sm-12" style="height:100px" id="repaireRemarks" name="repaireRemarks" act:asText="${workSheet.repaireRemarks}"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>备注</td>
+						<td colspan="3" style="height:110px">
+							<textarea  class="col-xs-12 col-sm-12" style="height:100px" id="remarks" name="remarks" act:asText="${workSheet.remarks}"></textarea>
+						</td>
+					</tr>
+				</table>
+				</form>
+			</div>
+        </div>
+	</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+		</style>
+		
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/  		  	 
+	    var nav = "errReport";
+		var subnav = [[${type}]];
+		
+		$(function() {
+			$('#start, #end').datepicker({language:'zh-CN',format:'yyyy/mm/dd',autoclose:true});
+		});			
+		
+		function query() {
+			$("#queryForm").submit();
+		}
+		
+		function exportReport(url) {
+			var exportUrl = url+"?start="+$("#start").val()+"&end="+$("#end").val();
+			//alert(exportUrl);
+			window.open(exportUrl);
+		}
+		/*]]>*/  
+			
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">统计报表</a>
+			</li>
+			<li class="active">故障总量统计</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					报表
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						<span th:text="${reportName}"></span>
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+			<div class="row">
+				<div class="col-sm-9">
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'total'}">
+						<thead>
+							<tr>
+								<th>设备/系统名称</th>
+								<th>故障总量</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.target_name}"/>
+								<td th:text="${item.amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'duration'}">
+						<thead>
+							<tr>
+								<th>设备/系统名称</th>
+								<th>故障总量</th>
+								<th>故障总时间</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.target_name}"/>
+								<td th:text="${item.amount}"/>
+								<td th:text="${item.duration}" th:classappend="${item.duration eq '故障至今未恢复' ? 'danger' : ''}"/>
+<!-- 								<td th:text="${item.duration lt 0 ? '故障至今未恢复' : item.duration}" th:classappend="${item.duration lt 0 ? 'danger' : ''}"/> -->
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'cause'}">
+						<thead>
+							<tr>
+								<th>故障原因</th>
+								<th>总数</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.cause}"/>
+								<td th:text="${item.amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'type'}">
+						<thead>
+							<tr>
+								<th>告警类型</th>
+								<th>总数</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.error_type}"/>
+								<td th:text="${item.amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'dept'}">
+						<thead>
+							<tr>
+								<th>申告单位</th>
+								<th>数量</th>
+								<th>已处理数量</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.department}"/>
+								<td th:text="${item.amount}"/>
+								<td th:text="${item.dual_amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'level'}">
+						<thead>
+							<tr>
+								<th>故障级别</th>
+								<th>数量</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.error_level}"/>
+								<td th:text="${item.amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'active'}">
+						<thead>
+							<tr>
+								<th>故障主体</th>
+								<th>故障总量</th>
+								<th>主动发现数量</th>
+								<th>主动发现率</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.target_name}"/>
+								<td th:text="${item.amount}"/>
+								<td th:text="${item.active_amount}"/>
+								<td th:text="${item.percentage}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'troubleshooter'}">
+						<thead>
+							<tr>
+								<th>申告人</th>
+								<th>数量</th>
+								<th>已处理数量</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.troubleshooter}"/>
+								<td th:text="${item.amount}"/>
+								<td th:text="${item.dual_amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+					<table id="simple-table" class="table  table-bordered table-hover" th:if="${type eq 'declare'}">
+						<thead>
+							<tr>
+								<th>申告方式</th>
+								<th>数量</th>
+								<th>已处理数量</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${report}">
+								<td th:text="${item.declare_type}"/>
+								<td th:text="${item.amount}"/>
+								<td th:text="${item.dual_amount}"/>
+							</tr>
+						</tbody>
+					</table>
+					
+				</div>
+				<div class="col-sm-3">
+					<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">查询条件</h4>
+
+							<span class="widget-toolbar">
+								<a href="javascript:query()">
+									<i class="ace-icon fa fa-refresh green"></i>
+								</a>
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-up"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="queryForm" th:action="${'errReport/report/'+type}">
+								<div>
+									<label for="start">开始时间</label>
+									<input type="text" class="form-control" name="start" id="start" th:value="${start==null?'':#dates.format(start, 'yyyy/MM/dd')}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="end">结束时间</label>
+									<input type="text" class="form-control" name="end" id="end" th:value="${end==null?'':#dates.format(end, 'yyyy/MM/dd')}"/>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="query()">
+									查找
+									<i class="ace-icon fa fa-arrow-right icon-on-right bigger-110"></i>
+								</button>
+								<button type="button" class="btn btn-sm btn-info" th:onclick="|exportReport('${'errReport/report_export/'+type}')|">
+									导出
+									<i class="ace-icon fa fa-database icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+        </div>
+	</body>
+</html>

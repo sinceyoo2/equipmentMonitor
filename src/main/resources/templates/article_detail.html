@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/js/editor.md-master/css/editormd.css"/>
+		<script src="assets/js/editor.md-master/lib/marked.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/prettify.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/raphael.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/underscore.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/sequence-diagram.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/flowchart.min.js"></script>
+		<script src="assets/js/editor.md-master/lib/jquery.flowchart.min.js"></script>
+		<script src="assets/js/editor.md-master/editormd.js"></script>
+		
+		<style type="text/css">
+			@media (min-width: 1600px) {
+			  .col-lg-3 {
+			  	width: 16.66666667%;
+			  }
+			  .col-lg-9 {
+			  	width: 83.33333333%;
+			  }
+			}
+		</style>
+		
+		<script language="javascript">
+			var nav = "article";
+			var subnav;
+			
+			$(function() {
+		        editormd.markdownToHTML("doc-content",{
+		        	htmlDecode: "style,script,iframe",
+		        	emoji: true,
+		        	taskList: true,
+		        	tex: true,
+		        	flowChart: true,
+		        	sequenceDiagram: true,
+		        	codeFold: true
+		        });
+			});			
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="article">故障知识库</a>
+			</li>
+			<li class="active">文章内容</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+			<div class="row">
+				<div class="col-sm-12 col-md-9 col-lg-9">
+					<div class="page-header">
+						<h1>
+							<span th:text="${article.title}"></span>
+							<small>
+								<i class="ace-icon fa fa-angle-double-right"></i>
+								故障编号：
+								<span th:text="${article.tag}"></span>
+							</small>
+							<button type="button" class="btn btn-sm pull-right"  onclick="window.history.back()"><i class="ace-icon fa fa-arrow-left"></i>&nbsp;&nbsp;返回</button>
+						</h1>
+					</div><!-- /.page-header -->
+					
+					<div class="well">
+						<h4 class="green smaller lighter">内容摘要</h4>
+						<span th:text="${article.summary}"></span>	
+					</div>
+					<div class="alert alert-info" th:if="${#lists.size(article.attachments)>0}">
+						<button type="button" class="close" data-dismiss="alert">
+							<i class="ace-icon fa fa-times"></i>
+						</button>
+						<strong><i class="ace-icon fa fa-paperclip bigger-120 info"></i>&nbsp;&nbsp;附件:&nbsp;&nbsp;</strong>
+
+<!-- 						<a th:href="${'article/download/'+article.attachments[0].id}" th:text="${article.attachments[0].fileName}" target="_blank"></a> -->
+<!-- 						<br/> -->
+						<ul>
+							<li th:each="item:${article.attachments}"><a th:href="${'article/download/'+item.id}" th:text="${item.fileName}" target="_blank"></a></li>
+						</ul>
+					</div>
+					<hr/>
+					<div id="doc-content">
+						<textarea style="display:none;" th:text="${article.content}"></textarea>
+					</div>
+				</div>
+				<div class="col-sm-12 col-md-3 col-lg-3">
+					<div class="panel panel-default">
+					  <div class="panel-heading">作者信息</div>
+					  <div class="panel-body">
+					  	<div class=" center">
+					  		<span class="profile-picture">
+								<img id="avatar" class="editable img-responsive" alt="Alex's Avatar" src="assets/images/avatars/profile-pic.jpg" />
+							</span>
+							<div class="space-4"></div>
+
+							<div class="width-80 label label-info label-xlg arrowed-in arrowed-in-right">
+								<div class="inline position-relative">
+									<a href="#" class="user-title-label dropdown-toggle" data-toggle="dropdown">
+										<i class="ace-icon fa fa-circle light-green"></i>
+										&nbsp;
+										<span class="white" th:text="${article.author.name+'.'+article.author.account}"/>
+									</a>
+								</div>
+							</div>
+					  	</div>
+					    
+					  </div>
+					  <ul class="list-group">
+					    <li class="list-group-item">
+					    	<a href="#" class="btn btn-link">
+								<i class="ace-icon fa fa-laptop bigger-120 info"></i>
+								单位：<span th:text="${article.author.deptName}"></span>
+							</a>
+						</li>
+					    <li class="list-group-item">
+					    	<a href="#" class="btn btn-link">
+								<i class="ace-icon fa fa-envelope bigger-120 pink"></i>
+								邮箱：<span th:text="${article.author.email}"/>
+							</a>
+						</li>
+						<li class="list-group-item">
+					    	<a href="#" class="btn btn-link">
+								<i class="ace-icon fa fa-phone bigger-120 green"></i>
+								电话：<span th:text="${article.author.telephone}"/>
+							</a>
+						</li>
+<!-- 						<li class="list-group-item"> -->
+<!-- 					    	<a href="#" class="btn btn-link"> -->
+<!-- 								<i class="ace-icon fa fa-qq bigger-120 green"></i> -->
+<!-- 								QQ：156322388 -->
+<!-- 							</a> -->
+<!-- 						</li> -->
+					  </ul>
+					</div>
+				</div>
+			</div>
+        </div>
+	</body>
+</html>

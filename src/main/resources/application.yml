@@ -1,0 +1,93 @@
+server: 
+  port: 80
+  
+spring: 
+  aop:
+    proxy-target-class: true
+  http:
+    encoding:
+      force: true
+      charset: UTF-8
+      enabled: true
+  thymeleaf:
+    mode: HTML5
+    encoding: UTF-8
+    content-type: text/html
+    cache: false
+  datasource: 
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://192.168.1.100:3306/monitordb?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 123456   
+#    driver-class-name: oracle.jdbc.driver.OracleDriver
+#    url: jdbc:oracle:thin:@192.168.1.104:1521/orcl
+#    username: ftjk
+#    password: ftjk@2017t 
+  jpa:
+    open-in-view: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  
+  data: 
+    mongodb-history: 
+      uri: mongodb://192.168.1.105:27017/monitor-history
+    mongodb-error: 
+      uri: mongodb://192.168.1.105:27017/monitor-error
+      
+  mail:
+    from-name: 627320115@qq.com
+    host: smtp.qq.com
+    username: 627320115
+    password: xjkbnrqbepnpbech
+    properties: 
+      mail: 
+        smtp: 
+          auth: true
+          starttls: 
+            enable: true
+            required: true
+
+#custom_rest: 
+#  connection: 
+#    connection-request-timeout: 3000
+#    connect-timeout: 3000
+#    read-timeout: 3000
+
+#  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#    time-zone: GMT+8
+      
+attachment: 
+  article: 
+    default-disk: G
+    path: /monitor-data/article/attachment/
+
+dbMonitor: 
+  driver: 
+    oracle: oracle.jdbc.driver.OracleDriver
+    mysql: com.mysql.jdbc.Driver
+    sql_server: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  url: 
+    oracle: jdbc:oracle:thin:@<ip>:<port>/<dbname>
+    mysql: jdbc:mysql://<ip>:<port>/<dbname>
+    sql_server: jdbc:sqlserver://<ip>:<port>;databaseName=<dbname>
+    
+sysLog: 
+  enable: false
+
+security: 
+  salt: syoo
+  cas: 
+    server:
+      host: https://202.105.12.188:8443/cas
+      login: ${security.cas.server.host}/login
+      logout: ${security.cas.server.host}/logout
+    service:
+      host: http://192.168.1.105:80
+      login: /login/cas
+      logout: /logout
+      
+kyle: 
+  api: 
+    create-flow: http://192.168.1.106/wf/createflow

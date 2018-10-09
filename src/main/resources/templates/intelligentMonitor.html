@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		
+		<script language="javascript">
+		var nav = "monitor";
+		var subnav = "intelligentMonitor";
+			
+			$(function() {
+				$('.show-details-btn').on('click', function(e) {
+					e.preventDefault();
+					$(this).closest('tr').next().toggleClass('open');
+					$(this).find(ace.vars['.icon']).toggleClass('fa-angle-double-down').toggleClass('fa-angle-double-up');
+				});
+			});			
+			
+			
+			function setForm(equipment) {				
+				$("#id, #ipAddress, #equipmentName, #equipmentNo, #remarks, #vendor, #model, #type","#observerId").val(null);
+				
+				if(equipment!=null) {
+					$("#id").val(equipment.id);
+					
+					$("#equipmentName").val(equipment.equipmentName);
+					$("#equipmentNo").val(equipment.equipmentNo);
+					$("#remarks").val(equipment.remarks);
+					$("#vendor").val(equipment.vendor);
+					$("#model").val(equipment.model);
+					$("#type").val(equipment.type);	
+					$("#ipAddress").val(equipment.ipAddress);		
+
+				}
+				
+			}
+			
+		</script>
+		
+		<script language="javascript" sec:authorize="hasRole('ROLE_ADMIN')">
+		/*<![CDATA[*/
+			function add(observerId) {
+				setForm();
+				if(observerId!=null) {
+					$("#observerId").val(observerId);
+					$("#isObserver").val("false");
+				} else {
+					$("#isObserver").val("true");
+				}
+				$("#equipmentModal").modal('show');
+			}
+		
+			function edit(id, observerId) {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'equipment/item/'+id, success:function(equipment){
+					loading.modal('hide');
+					setForm(equipment);
+					if(observerId!=null) {
+						$("#observerId").val(observerId);
+						$("#isObserver").val("false");
+					} else {
+						$("#isObserver").val("true");
+					}
+					$("#equipmentModal").modal('show');
+				}});
+				
+			}
+			
+			function save() {
+				var items = $("*[check='notBlank']");
+				for(var i=0; i<items.length; i++) {
+					var value = $(items[i]).val();
+					if(value==null || $.trim(value)=='') {
+						alert("请输入："+$(items[i]).attr("placeholder"));
+						return;
+					}
+				}
+				
+				$("#equipment").modal('hide');
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+
+				$("#equipmentForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+                       //alert("我在提交表单成功之后被调用");
+						loading.modal('hide');
+						alert(rest);
+						location.reload();
+
+                    }
+                });
+			}
+			
+			function del(id) {	
+				var flag = confirm("确定要删除当前设备吗?");
+				if(!flag) {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'equipment/equipment_del/'+id, success:function(rest){
+					loading.modal('hide');
+					alert(rest);
+					location.reload();
+				}});
+			}
+			
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">应用监控</a>
+			</li>
+			<li class="active">智能馆设备监控</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					监控配置
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						智能馆设备列表
+					</small>
+				</h1>
+			</div>
+			<div class="clearfix">
+				<div class="pull-right tableTools-container" sec:authorize="hasRole('ROLE_ADMIN')">
+					<button onclick="add()" class="btn btn-info btn-xs">
+						<i class="ace-icon fa fa-pencil align-top bigger-125"></i>
+						添加
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<table id="simple-table" class="table  table-bordered table-hover">
+					<thead>
+						<tr>
+							<th>设备名称</th>
+							<th class="detail-col"><i class="ace-icon fa fa-angle-double-down"></i></th>
+							<th>设备编码</th>
+							<th>设备类型</th>
+							<th>品牌</th>
+							<th>型号</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<span th:each="item:${equipments}">
+						<tr>
+							<td th:text="${item.equipmentName + ' (' + item.ipAddress + ')'}"/>
+							<td class="center">
+								<div class="action-buttons">
+									<a href="#" class="green bigger-140 show-details-btn" title="Show Details">
+										<i class="ace-icon fa fa-angle-double-down"></i>
+										<span class="sr-only">Details</span>
+									</a>
+								</div>
+							</td>
+							<td th:text="${item.equipmentNo}"/>
+							<td th:text="${item.type}"/>
+							<td th:text="${item.vendor}"/>
+							<td th:text="${item.model}"/>
+							<td>
+								<div class="hidden-xs btn-group">
+									<button class="btn btn-xs btn-info" th:onclick="|edit('${item.id}')|">
+										<i class="ace-icon fa fa-pencil bigger-120"></i>
+									</button>
+									
+									<button class="btn btn-xs" th:onclick="|del('${item.id}')|" sec:authorize="hasRole('ROLE_ADMIN')">
+										<i class="ace-icon fa fa-trash-o bigger-120"></i>
+									</button>
+									
+									<button class="btn btn-xs btn-success" th:onclick="|add('${item.id}')|" sec:authorize="hasRole('ROLE_ADMIN')">
+										<i class="ace-icon fa fa-plus bigger-120"></i>
+									</button>
+								</div>
+							</td>
+						</tr>
+						<tr class="detail-row" th:if="${#lists.size(item.followers) gt 0}">
+							<td colspan="8">
+								<table id="simple-table-sub" class="table  table-bordered table-hover">
+									<thead>
+										<tr>
+											<th>设备名称</th>
+											<th>设备编码</th>
+											<th>设备类型</th>
+											<th>品牌</th>
+											<th>型号</th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr th:each="child:${item.followers}">
+											<td th:text="${child.equipmentName + ' (' + child.ipAddress + ')'}"/>
+											<td th:text="${child.equipmentNo}"/>
+											<td th:text="${child.type}"/>
+											<td th:text="${child.vendor}"/>
+											<td th:text="${child.model}"/>
+											<td>
+												<div class="hidden-xs btn-group">
+													<button class="btn btn-xs btn-info" th:onclick="|edit('${child.id}','${item.id}')|">
+														<i class="ace-icon fa fa-pencil bigger-120"></i>
+													</button>
+													
+													<button class="btn btn-xs" th:onclick="|del('${child.id}')|" sec:authorize="hasRole('ROLE_ADMIN')">
+														<i class="ace-icon fa fa-trash-o bigger-120"></i>
+													</button>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+						</span>
+											
+					</tbody>
+				</table>
+			</div>
+			
+			
+			<div class="modal fade" id="equipmentModal" tabindex="-2" role="dialog" aria-labelledby="equipmentModalLabel">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">设备信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  	<form id="equipmentForm" action="equipment/equipment_save" method="post" class="form-horizontal" role="form">
+				  		<input type="hidden" name="id" id="id"/>
+				  		<input type="hidden" name="positionType" value="智能馆设备"/>
+				  		<input type="hidden" name="isObserver" id="isObserver" value="true"/>
+				  		<input type="hidden" name="myObserver.id" id="observerId" />
+				  		<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="type"> 设备类型 </label>
+							<div class="col-sm-8">
+								<select class="form-control" id="type" name="type" check="notBlank" placeholder="设备类型">
+									<option value=""></option>
+									<option value="检索机">检索机</option>
+									<option value="上网机">上网机</option>
+									<option value="自助借还机">自助借还机</option>
+									<option value="自助打印终端">自助打印终端</option>
+									<option value="数字公告板">数字公告板</option>
+									<option value="触控一体机">触控一体机</option>
+									<option value="智能书架控制器">智能书架控制器</option>
+									<option value="门禁">门禁</option>
+									<option value="摄像抢">摄像抢</option>
+									<option value="">其他</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="type"> 设备IP </label>
+							<div class="col-sm-8">
+								<input class="form-control" type="text" id="ipAddress" name="ipAddress" placeholder="设备IP" check="notBlank" />
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="equipmentName"> 名称/编码 </label>
+							<div class="col-sm-10">
+								<input type="text" id="equipmentName" name="equipmentName" placeholder="设备名称" class="col-xs-6 col-sm-6" style="margin-right:5px" check="notBlank" />
+								<input type="text" id="equipmentNo" name="equipmentNo" placeholder="设备编码" class="col-xs-4 col-sm-4" check="notBlank" />
+							</div>
+						</div>
+						<div class="space-6"></div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="vendor"> 品牌/型号</label>
+							<div class="col-sm-10">
+								<input type="text" id="vendor" name="vendor" placeholder="品牌" class="col-xs-6 col-sm-6" style="margin-right:5px" check="notBlank" />
+								<input type="text" id="model" name="model" placeholder="型号" class="col-xs-4 col-sm-4" check="notBlank" />
+							</div>
+						</div>
+						<hr/>
+						<div class="form-group">
+							<label class="col-sm-2 control-label no-padding-right" for="remarks"> 备注 </label>
+							<div class="col-sm-10">
+								<textarea class="form-control" id="remarks" name="remarks" style="width:85%"></textarea>
+							</div>
+						</div>
+					</form>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+		        	<button id="createScheduling" type="button" class="btn btn-primary" onclick="save()" sec:authorize="hasRole('ROLE_ADMIN')">保存</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+        </div>
+	</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>
+		
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		<script src="assets/js/moment.min.js"></script>
+		
+		<style type="text/css">
+			.widget-main hr {margin-top:10px; margin-bottom:10px}
+		</style>
+		
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/  		    
+			var nav = "errQuery";
+			var subnav;
+			
+			$(function() {
+				$('#start, #end').datepicker({language:'zh-CN',format:'yyyy/mm/dd',autoclose:true});
+			});
+			
+			var currentPage = [[${errorPage.number+1}]];
+			
+			function query(pageNo, pageSize) {
+				if(pageNo==currentPage) {
+					return;
+				}
+				var action = "errMsg";
+				if(pageSize!=null) {
+					action += "/"+pageSize+"/"+pageNo
+				} else if(pageNo!=null) {
+					action += "/"+pageNo
+				}
+				$("#queryForm").attr("action", action);
+				$("#queryForm").submit();
+			}
+			
+			function newWorkSheet(errorId) {
+				location.href = "worksheet/new_item/"+errorId;
+			}
+			
+			function detail(errorId) {
+// 				alert(errorId);
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'errMsg/item/'+errorId, success:function(error){				
+					for(var field in error) {
+						var td = $("#td_"+field);
+						if(td.length==1) {
+							if(field=='errorTime') {
+								td.text(moment(new Date(error[field])).format('YYYY-MM-DD HH:mm:ss'))
+							} else {
+								td.text(error[field]);
+							}					
+						}
+					}
+					loading.modal('hide');
+					$("#detailModal").modal('show');
+				}});
+			}
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">故障查询</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					故障查询
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						故障查询结果列表
+					</small>
+				</h1>
+			</div><!-- /.page-header -->
+            <div class="row">
+            	<div class="col-sm-10">
+            		<table id="simple-table" class="table  table-bordered table-hover">
+						<thead>
+							<tr>
+								<th>故障主体</th>
+								<th>申告类型</th>
+								<th>申告账号</th>
+								<th>申告单号</th>
+								<th>申告时间</th>
+								<th>申告情况</th>
+								<th>故障级别</th>
+								<th>处理状态</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${errorPage.content}">
+								<td th:text="${item.targetName}"/>
+								<td th:text="${item.declareType}"/>
+								<td th:text="${item.troubleshooter}"/>
+								<td th:text="${item.msgSource}"/>
+								<td th:text="${#dates.format(item.errorTime, 'yyyy/MM/dd HH:mm')}"/>
+								<td th:text="${item.summary}"/>
+								<td th:text="${item.errorLevel eq 1 ? '轻微' : (item.errorLevel eq 2 ? '一般' : '严重')}"/>
+								<td >
+									<span class="label" th:text="${item.status}" th:classappend="${item.status eq '发现故障'?'label-danger':item.status eq '处理中'?'label-warning':'label-success'}"/>
+								</td>
+								<td>
+									<a th:href="|javascript:detail('${item.id}')|">详情</a>
+<!-- 									&nbsp;&nbsp; -->
+<!-- 									<a th:href="|javascript:newWorkSheet('${item.id}')|">发起工单</a> -->
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="btn-group btn-corner" th:if="${errorPage.totalPages>0}">
+						<button class="btn btn-light" onclick="query(1)">首页</button>
+						<button class="btn btn-light" th:onclick="|query(${errorPage.number gt 1 ? errorPage.number : 1})|">上一页</button>
+						<button class="btn btn-info" th:text="${'当前第'+(errorPage.number+1)+'页'}"></button>
+						<button class="btn btn-light" th:onclick="|query(${errorPage.number lt errorPage.totalPages-2 ? errorPage.number+2 : errorPage.totalPages})|">下一页</button>
+						<button class="btn btn-light" th:onclick="|query(${errorPage.totalPages})|">尾页</button>
+					</div>
+<!-- 					<div class="btn-group btn-corner" th:if="${errorPage.totalPages>0}"> -->
+<!-- 						<button class="btn btn-light" onclick="query(1)">首页</button> -->
+<!-- 						<button class="btn"  -->
+<!-- 								th:each="i:${#numbers.sequence(1, errorPage.totalPages)}"  -->
+<!-- 								th:text="${i}"  -->
+<!-- 								th:onclick="|query(${i})|"  -->
+<!-- 								th:classappend="${i eq errorPage.number+1?'btn-info':'btn-light'}"></button> -->
+<!-- 						<button class="btn btn-light" th:onclick="|query(${errorPage.totalPages})|">尾页</button> -->
+<!-- 					</div> -->
+            	</div>
+            	<div class="col-sm-2">
+            		<div class="widget-box">
+						<div class="widget-header">
+							<h4 class="widget-title">查询条件</h4>
+
+							<span class="widget-toolbar">
+								<a href="javascript:query()">
+									<i class="ace-icon fa fa-refresh green"></i>
+								</a>
+
+								<a href="#" data-action="collapse">
+									<i class="ace-icon fa fa-chevron-up"></i>
+								</a>
+							</span>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main">
+							<form id="queryForm" action="errMsg">
+								<label>时间范围</label>
+
+								<div class="row">
+									<div class="col-xs-8 col-sm-11">
+										<div class="input-daterange input-group">
+											<input type="text" class="input-sm form-control" name="start" id="start" th:value="${condition.start==null?'':#dates.format(condition.start, 'yyyy/MM/dd')}"/>
+											<span class="input-group-addon">
+												<i class="fa fa-exchange"></i>
+											</span>
+
+											<input type="text" class="input-sm form-control" name="end" id="end"  th:value="${condition.end==null?'':#dates.format(condition.end, 'yyyy/MM/dd')}"/>
+										</div>
+									</div>
+								</div>
+								<hr />
+								<div>
+									<label for="troubleshooter">申告帐号</label>
+									<input class="form-control" id="troubleshooter" name="troubleshooter" placeholder="申告帐号" th:value="${condition.troubleshooter}"/>
+								</div>
+								<hr />
+								<div>
+									<label for="declareType">申告类型</label>
+									<select class="form-control" id="declareType" name="declareType" th:value="${condition.declareType}">
+										<option value=""></option>
+										<option value="读者申告" th:selected="${condition.declareType eq '读者申告'}">读者申告</option>
+										<option value="工作人员申告" th:selected="${condition.declareType eq '工作人员申告'}">工作人员申告</option>
+										<option value="监控发现" th:selected="${condition.declareType eq '监控发现'}">监控发现</option>
+									</select>
+								</div>
+								<hr />
+<!-- 								<div> -->
+<!-- 									<label for="msgSource">申告来源</label> -->
+<!-- 									<input class="form-control" id="msgSource" name="msgSource" placeholder="申告单号" th:value="${condition.msgSource}"/> -->
+<!-- 								</div> -->
+<!-- 								<hr /> -->
+								<div>
+									<label for="errorLevel">故障级别</label>
+									<select class="form-control" id="errorLevel" name="errorLevel" th:value="${condition.errorLevel}">
+										<option value="0"></option>
+										<option value="1" th:selected="${condition.errorLevel eq 1}">轻微</option>
+										<option value="2" th:selected="${condition.errorLevel eq 2}">一般</option>
+										<option value="3" th:selected="${condition.errorLevel eq 3}">严重</option>
+									</select>
+								</div>
+								<hr />
+								<div>
+									<label for="status">故障状态</label>
+									<select class="form-control" id="status" name="status" th:value="${condition.status}">
+										<option value=""></option>
+										<option value="发现故障" th:selected="${condition.status eq '发现故障'}">发现故障</option>
+										<option value="正在处理" th:selected="${condition.status eq '正在处理'}">正在处理</option>
+										<option value="已恢复" th:selected="${condition.status eq '已恢复'}">已恢复</option>
+									</select>
+								</div>
+								<hr />
+								<div>
+									<label for="summary">申告情况</label>
+									<textarea class="form-control" id="summary" name="summary" placeholder="申告情况" th:value="${condition.summary}"></textarea>
+								</div>
+								<hr />
+								<button type="button" class="btn btn-sm btn-success" onclick="query()">
+									查找
+									<i class="ace-icon fa fa-arrow-right icon-on-right bigger-110"></i>
+								</button>
+							</form>
+							</div>
+						</div>
+					</div>
+            	</div>
+            </div>	
+            
+            <div class="modal fade" id="detailModal" tabindex="-2" role="dialog" aria-labelledby="detailModalLabel">
+			  <div class="modal-dialog" role="document" style="width:650px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">详细信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  		<table id="simple-table" class="table  table-bordered table-hover">		
+							<tbody>
+								<tr>
+									<th style="width:150px">故障主体</th>
+									<td id="td_targetName">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>申告类型</th>
+									<td id="td_declareType">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>申告人</th>
+									<td id="td_troubleshooter">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>申告时间</th>
+									<td id="td_errorTime">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>处理状态</th>
+									<td id="td_status">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>申告情况</th>
+									<td id="td_cause">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>故障描述</th>
+									<td id="td_description">&nbsp;</td>
+								</tr>	
+							</tbody>
+						</table>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->		
+        </div>
+	</body>
+</html>

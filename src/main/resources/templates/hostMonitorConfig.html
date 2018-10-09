@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script src="assets/js/bootstrap-tag.min.js"></script>
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		<script src="assets/js/jquery.jqGrid.min.js"></script>
+		
+		<style type="text/css">
+			.tags {width:100%}
+		</style>
+		
+		<script language="javascript">
+		/*<![CDATA[*/
+			var nav = "monitor";
+			var subnav = "hostMonitor";
+			
+			var smsReceivers_input;
+			var emailReceivers_input;
+			
+			var smsReceivers_tag;
+			var emailReceivers_tag;
+			
+			$(function() {
+				$("#bind-table").jqGrid({		
+					url:'equipment/bindable_cabinet',
+					datatype:'json',
+					height: 600,
+					colNames:['设备编号','设备名称','位置',''],
+					colModel:[
+						{name:'equipmentNo',index:'equipmentNo',width:100},
+						{name:'equipmentName',index:'equipmentName',width:200},
+						{name:'vendor',index:'vendor',width:280, formatter:positionFormatter},
+						{name:'',index:'', formatter:bindFormatter,width:60}
+					],
+		            autowidth:true,
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+				
+				smsReceivers_input = $("#smsReceivers").tag();
+				emailReceivers_input = $("#emailReceivers").tag();
+				smsReceivers_tag = $('#smsReceivers').data('tag');
+				emailReceivers_tag = $('#emailReceivers').data('tag');
+			});
+			
+			function setForm(config) {
+				$("#id").val("");
+				$("#hostName").val("");
+				$("#ipAddress").val("");
+				$("#remark").val("");
+				$("#cpuCheckFrequency").val("1");
+				$("#memoryCheckFrequency").val("1");
+				$("#networkCheckFrequency").val("1");
+				$("#diskCheckFrequency").val("3600");
+				$("#cpuThreshold").val("80");
+				$("#memoryThreshold").val("80");
+				$("#networkThreshold").val("512");
+				$("#diskThreshold").val("90");
+				$("#cpuContinued").val("30");
+				$("#memoryContinued").val("60");
+				$("#networkContinued").val("300");
+				$("#diskContinued").val("1");
+				//$("#saveHistory").attr("checked",false);
+				$("#saveHistory").prop("checked",false);
+				//$("#notice").attr("checked",false);
+				$("#notice").prop("checked",false);
+				$("#smsReceivers").val("");
+				if(smsReceivers_tag.values!=null && smsReceivers_tag.values.length>0) {
+					var values = smsReceivers_tag.values;
+					for(var i=values.length-1; i>=0; i--) {
+						smsReceivers_tag.remove(i);
+					}
+				}
+				$("#emailReceivers").val("");
+				if(emailReceivers_tag.values!=null && emailReceivers_tag.values.length>0) {
+					var values = emailReceivers_tag.values;
+					for(var i=values.length-1; i>=0; i--) {
+						emailReceivers_tag.remove(i);
+					}
+				}
+
+				if(config!=null) {
+					$("#id").val(config.id);
+					$("#hostName").val(config.hostName);
+					$("#ipAddress").val(config.ipAddress);
+					$("#remark").val(config.remark);
+					$("#cpuCheckFrequency").val(config.cpuCheckFrequency);
+					$("#memoryCheckFrequency").val(config.memoryCheckFrequency);
+					$("#networkCheckFrequency").val(config.networkCheckFrequency);
+					$("#diskCheckFrequency").val(config.diskCheckFrequency);
+					$("#cpuThreshold").val(config.cpuThreshold);
+					$("#memoryThreshold").val(config.memoryThreshold);
+					$("#networkThreshold").val(config.networkThreshold);
+					$("#diskThreshold").val(config.diskThreshold);
+					$("#cpuContinued").val(config.cpuContinued);
+					$("#memoryContinued").val(config.memoryContinued);
+					$("#networkContinued").val(config.networkContinued);
+					$("#diskContinued").val(config.diskContinued);
+					//$("#saveHistory").attr("checked",config.saveHistory);
+					$("#saveHistory").prop("checked",config.saveHistory);
+					//$("#notice").attr("checked",config.notice);
+					$("#notice").prop("checked",config.notice);
+					
+					$("#smsReceivers").val(config.smsReceivers);
+					if(config.smsReceivers!=null && $.trim(config.smsReceivers)!='') {
+						var item = config.smsReceivers.split(',');
+						for(var i=0; i<item.length; i++) {
+							smsReceivers_tag.add(item[i]);	
+						}	
+					}
+					
+					
+					$("#emailReceivers").val(config.emailReceivers);
+					if(config.emailReceivers!=null && $.trim(config.emailReceivers)!='') {
+						var item = config.emailReceivers.split(',');
+						for(var i=0; i<item.length; i++) {
+							emailReceivers_tag.add(item[i]);	
+						}	
+					}
+				}
+				
+			}
+			
+			function add() {
+				setForm();
+				$("#configModal").modal('show');
+			}
+			
+			function edit(id) {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'hostMonitor/hostConfig/item/'+id, success:function(config){
+					loading.modal('hide');
+					setForm(config);
+					$("#configModal").modal('show');
+				}});
+				
+			}
+			
+			function save() {
+				var items = $("*[check='notBlank']");
+				for(var i=0; i<items.length; i++) {
+					var value = $(items[i]).val();
+					if(value==null || $.trim(value)=='') {
+						alert("请输入："+$(items[i]).attr("placeholder"));
+						return;
+					}
+				}
+				
+				$("#configModal").modal('hide');
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+
+				$("#configForm").ajaxSubmit({
+                    beforeSubmit:function () {
+                       //alert("我在提交表单之前被调用！");
+                    },
+                    success:function (rest) {
+                       //alert("我在提交表单成功之后被调用");
+						loading.modal('hide');
+						alert(rest);
+						location.reload();
+
+                    }
+                });
+			}
+			
+			function del(id) {	
+				var flag = confirm("确定要删除当前配置吗?");
+				if(!flag) {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'hostMonitor/hostConfig_del/item/'+id, success:function(rest){
+					loading.modal('hide');
+					alert(rest);
+					location.reload();
+				}});
+			}
+			
+			var currentConfigId;
+			function openBind(configId) {
+				currentConfigId = configId;
+				$("#bindModal").modal('show');
+			}
+			
+			function findBindable() {
+				$("#bind-table").jqGrid('clearGridData');  //清空表格
+				$("#bind-table").jqGrid('setGridParam',{  // 重新加载数据
+					url:'equipment/bindable_cabinet?vague='+$("#bindVague").val(),  
+					datatype:'json'
+				}).trigger("reloadGrid");
+			}
+			
+			function bindFormatter(cellvalue, options, rowObject) {
+				return '<a href="javascript:setBind(\''+rowObject.id+'\')">绑定</a>';
+			}
+			
+			function positionFormatter(cellvalue, options, rowObject) {
+				if(rowObject.lib==null || rowObject.cabinet==null) {
+					return "未知位置";
+				}
+// 				return JSON.stringify(rowObject);
+				return rowObject.lib.libName+'|'+rowObject.cabinet.name+'|'+rowObject.startU+'U~'+rowObject.endU+'U';
+			}
+			
+			function setBind(id) {
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'hostMonitor/hostConfig/setBind/'+currentConfigId+'/'+id, success:function(rest){
+					loading.modal('hide');
+					$("#bindModal").modal('hide');
+					alert(rest);
+					location.reload();
+				}});				
+			}
+		/*]]>*/
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">应用监控</a>
+			</li>
+			<li class="active">操作系统监控</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					监控配置
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						主机监控配置列表
+					</small>
+				</h1>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left tableTools-container">
+					<form class="form-search-config" action="hostConfig" method="get">
+						<span class="input-icon">
+							<input th:value="${vague}" type="text" placeholder="查找 ..." class="nav-search-input" id="vague" name="vague" autocomplete="off" />
+							<i class="ace-icon fa fa-search nav-search-icon"></i>
+						</span>
+						<input class="btn btn-info btn-xs" type="submit" value="查找"/>
+					</form>
+				</div>
+				<div class="pull-right tableTools-container">
+					<button onclick="add()" class="btn btn-info btn-xs">
+						<i class="ace-icon fa fa-pencil align-top bigger-125"></i>
+						添加
+					</button>
+					&nbsp;
+					<button class="btn btn-xs">
+						<i class="ace-icon fa fa-reply align-top bigger-125"></i>
+						返回
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<table id="simple-table" class="table  table-bordered table-hover">
+					<thead>
+						<tr>
+							<th>主机名称</th>
+							<th>IP地址</th>
+							<th class="hidden-480">备注描述</th>
+							<th>历史数据</th>
+							<th class="hidden-480">预警情况</th>
+							<th>绑定设备</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						<tr th:each="config:${configs}">
+							<td th:text="${config.hostName}"/>
+							<td th:text="${config.ipAddress}"/>
+							<td class="hidden-480" th:text="${config.remark}"/>
+							<td th:text="${config.saveHistoryInfo}"/>
+							<td class="hidden-480">
+								<span class="label label-sm label-warning arrowed-in" th:text="${config.simpleSmsInfo}"/>
+								<span class="label label-sm label-success arrowed-in" th:text="${config.simpleEmailInfo}"/>
+							</td>
+							<td th:text="${config.bindEquipment==null?'-':config.bindEquipment.equipmentName}"></td>
+							<td>
+								<div class="hidden-sm hidden-xs btn-group">
+									<button class="btn btn-xs btn-info" th:onclick="|edit('${config.id}')|" data-rel="tooltip" title="编辑">
+										<i class="ace-icon fa fa-pencil bigger-120"></i>
+									</button>
+									
+									<button class="btn btn-xs" th:onclick="|del('${config.id}')|" data-rel="tooltip" title="删除">
+										<i class="ace-icon fa fa-trash-o bigger-120"></i>
+									</button>
+									
+									<button class="btn btn-xs btn-purple" th:onclick="|openBind('${config.id}')|" data-rel="tooltip" title="绑定服务器">
+										<i class="ace-icon fa fa-link bigger-120"></i>
+									</button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			
+			<div class="modal fade" id="configModal" tabindex="-2" role="dialog" aria-labelledby="myModalLabel">
+			  <div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">主机监控配置</h4>
+			      </div>
+			      <div class="modal-body">
+			      	<div class="row">
+			      		<div class="col-sm-12 widget-container-col" id="widget-container-col-12">
+							<div class="widget-box transparent" id="widget-box-12">
+								<div class="widget-header">
+									<div class="widget-toolbar no-border pull-left">
+										<ul class="nav nav-tabs" id="myTab2">
+											<li class="active">
+												<a data-toggle="tab" href="#home2">主机信息</a>
+											</li>
+
+											<li>
+												<a data-toggle="tab" href="#profile2">监控配置</a>
+											</li>
+
+											<li>
+												<a data-toggle="tab" href="#info2">通知配置</a>
+											</li>
+										</ul>
+									</div>
+								</div>
+
+								<div class="widget-body">
+									<form id="configForm" action="hostMonitor/hostConfig_save" method="post" class="form-horizontal" role="form">
+									<input type="hidden" name="id" id="id"/>
+									<div class="widget-main padding-12 no-padding-left no-padding-right">
+										<div class="tab-content padding-4">
+											<div id="home2" class="tab-pane in active">
+												<div class="form-group">
+													<label class="col-sm-2 control-label no-padding-right" for="hostName"> 主机名称 </label>
+													<div class="col-sm-10">
+														<input type="text" id="hostName" name="hostName" placeholder="主机名称" class="col-xs-10 col-sm-5"  check="notBlank"/>
+													</div>
+												</div>
+												<div class="form-group">
+													<label class="col-sm-2 control-label no-padding-right" for="ipAddress"> IP地址 </label>
+													<div class="col-sm-10">
+														<input type="text" id="ipAddress" name="ipAddress" placeholder="IP地址" class="col-xs-10 col-sm-5" check="notBlank" />
+													</div>
+												</div>
+												<div class="form-group">
+													<label class="col-sm-2 control-label no-padding-right" for="remark"> 备注描述 </label>
+													<div class="col-sm-10">
+														<textarea type="text" id="remark" name="remark" placeholder="备注描述" class="form-control"></textarea>
+													</div>
+												</div>
+											</div>
+	
+											<div id="profile2" class="tab-pane">
+												<div>
+													<label for="form-field-mask-1">
+														检查频率
+														<small class="text-success">单位：秒</small>
+													</label>
+													<br/><br/>
+													<div class="row">
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="cpuCheckFrequency"> CPU </label>
+															<div class="col-sm-9">
+																<input type="text" id="cpuCheckFrequency" name="cpuCheckFrequency" class="col-xs-12 col-sm-12" readonly="readonly"/>
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="memoryCheckFrequency"> 内存 </label>
+															<div class="col-sm-9">
+																<input type="text" id="memoryCheckFrequency" name="memoryCheckFrequency" class="col-xs-12 col-sm-12" readonly="readonly" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="networkCheckFrequency"> 网络 </label>
+															<div class="col-sm-9">
+																<input type="text" id="networkCheckFrequency" name="networkCheckFrequency" class="col-xs-12 col-sm-12" readonly="readonly" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="diskCheckFrequency"> 磁盘 </label>
+															<div class="col-sm-9">
+																<input type="text" id="diskCheckFrequency" name="diskCheckFrequency" class="col-xs-12 col-sm-12" readonly="readonly" />
+															</div>
+														</div>
+													</div>
+													<hr/>
+												</div>
+												<div>
+													<label for="form-field-mask-1">
+														预警阀值
+														<small class="text-success">网络单位：k/s,其它：%</small>
+													</label>
+													<br/><br/>
+													<div class="row">
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="cpuThreshold"> CPU </label>
+															<div class="col-sm-9">
+																<input type="text" id="cpuThreshold" name="cpuThreshold" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="memoryThreshold"> 内存 </label>
+															<div class="col-sm-9">
+																<input type="text" id="memoryThreshold" name="memoryThreshold" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="networkThreshold"> 网络 </label>
+															<div class="col-sm-9">
+																<input type="text" id="networkThreshold" name="networkThreshold" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="diskThreshold"> 磁盘 </label>
+															<div class="col-sm-9">
+																<input type="text" id="diskThreshold" name="diskThreshold" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+													</div>
+													<hr/>
+												</div>
+												<div>
+													<label for="form-field-mask-1">
+														连续超过阀值多少次
+														<small class="text-success">?次</small>
+														预警
+													</label>
+													<br/><br/>
+													<div class="row">
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="cpuContinued"> CPU </label>
+															<div class="col-sm-9">
+																<input type="text" id="cpuContinued" name="cpuContinued" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="memoryContinued"> 内存 </label>
+															<div class="col-sm-9">
+																<input type="text" id="memoryContinued" name="memoryContinued" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="networkContinued"> 网络 </label>
+															<div class="col-sm-9">
+																<input type="text" id="networkContinued" name="networkContinued" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+														<div class="col-sm-3 col-xs-12 no-padding-left no-padding-right">
+															<label class="col-sm-3 control-label no-padding-left no-padding-right" for="diskContinued"> 磁盘 </label>
+															<div class="col-sm-9">
+																<input type="text" id="diskContinued" name="diskContinued" class="col-xs-12 col-sm-12" />
+															</div>
+														</div>
+													</div>
+													<hr/>
+												</div>
+												<div class="checkbox">
+													<label>
+														<input id="saveHistory" name="saveHistory" class="ace" type="checkbox"/>
+														<span class="lbl"> 是否保存历史数据</span>
+													</label>
+												</div>
+											</div>
+	
+											<div id="info2" class="tab-pane">
+												<div class="checkbox">
+													<label>
+														<input id="notice" name="notice" class="ace" type="checkbox"/>
+														<span class="lbl"> 是否发送通知</span>
+													</label>
+												</div>
+												<hr/>
+												<label for="smsReceivers">通知短信号码</label>
+												<div>		
+													<input class="form-control" id="smsReceivers" name="smsReceivers" />
+												</div>
+												<hr/>
+												<label for="emailReceivers">通知邮箱账号</label>
+												<div>
+													<input class="form-control" id="emailReceivers" name="emailReceivers" />
+												</div>
+											</div>
+										</div>
+									</div>
+									</form>
+								</div>
+							</div>
+						</div>
+			      	</div>
+			      	
+					
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-default" data-dismiss="modal">退出</button>
+			        <button id="createScheduling" type="button" class="btn btn-primary" onclick="save()">保存</button>
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+			<div class="modal fade" id="bindModal" tabindex="-2" role="dialog" aria-labelledby="bindModalLabel">
+			  <div class="modal-dialog" role="document" style="width:650px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">绑定设备</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  		<div class="row" style="padding-left:15px">
+				  			<div class="input-group col-sm-6" style="float:left">	
+								<input id="bindVague" type="text" class="form-control search-query" placeholder="查找内容" />
+								<span class="input-group-btn">
+									<button type="button" class="btn btn-purple btn-sm" onclick="findBindable()">
+										<span class="ace-icon fa fa-search icon-on-right bigger-110"></span>
+										查找
+									</button>
+								</span>
+							</div>
+				  		</div>
+						<div class="space-6"></div>
+						<table id="bind-table" ></table>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+        </div>
+	</body>
+</html>

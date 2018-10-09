@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/chosen.min.css" />
+		
+		<script src="assets/js/bootstrap-tag.min.js"></script>
+		<script src="assets/js/chosen.jquery.min.js"></script>
+		
+		<script src="assets/js/myjs/jquery.form.js"></script>
+		<script src="assets/js/jquery.jqGrid.min.js"></script>
+		<script src="assets/js/moment.min.js"></script>
+		
+		<style type="text/css">
+			#worksheetTable {width:800px;border:#bcbcbc}
+			#worksheetTable td {padding:5px;min-height:35px;height:35px}
+			.workSheetTitle{width:110px}
+		</style>
+		
+		<script language="javascript">
+		/*<![CDATA[*/
+			var nav = "worksheet";
+			var subnav = "history";
+			
+			$(function(){
+				$("#processes-table").jqGrid({		
+					height: 350,
+					colNames:['任务名称','任务创建时间','执行人', '任务完成时间'],
+					colModel:[
+						{name:'name',index:'name', width:150},
+						{name:'createTime',index:'createTime', width:150, formatter:dateFormatter},
+						{name:'assignee',index:'assignee', width:150},
+						{name:'endTime',index:'endTime', width:150, formatter:dateFormatter}
+					],
+					scrollOffset: 1,
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+			});
+			
+			function processStep(sheetId) {
+				$("#processes-table").jqGrid('setGridParam',{  // 重新加载数据
+					url:'worksheet/history_step/'+sheetId,  
+					datatype:'json'
+				}).trigger("reloadGrid");
+				$("#processModal").modal('show');
+			}
+			
+			function sheetDetail(sheetId) {
+				$(".workSheetInfo").html("&nbsp;");
+				
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'worksheet/item/'+sheetId, success:function(workSheet){
+					loading.modal('hide');
+					var infoBoxes = $(".workSheetInfo");
+					//alert(JSON.stringify(workSheet));
+					for(var i=0; i<infoBoxes.length; i++) {
+						var infoBox = infoBoxes[i];
+						if(infoBox.id=='acceptor' || infoBox.id=='executor') {
+							if(workSheet[infoBox.id]!=null) {
+								$("#"+infoBox.id).text(workSheet[infoBox.id].account);
+							}			
+						} else {
+							$("#"+infoBox.id).text(workSheet[infoBox.id]);
+						}
+						
+					}
+					$("#workSheetModal").modal('show');
+				}});
+			}
+			
+			function dateFormatter(cellvalue, options, rowObject) {
+				//return new Date(cellvalue);
+				return moment(new Date(cellvalue)).format('YYYY-MM-DD HH:mm:ss')
+			}
+			
+		/*]]>*/
+		</script>
+		
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+			<li class="active">工单管理</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					已办工作
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						已办工作列表
+					</small>
+				</h1>
+			</div>
+			<div class="clearfix">
+				<div class="pull-left tableTools-container">
+					<form class="form-search-config" action="pingMonitor" method="get">
+						<span class="input-icon">
+							<input type="text" placeholder="查找 ..." class="nav-search-input" id="vague" name="vague" autocomplete="off" />
+							<i class="ace-icon fa fa-search nav-search-icon"></i>
+						</span>
+						<input class="btn btn-info btn-xs" type="submit" value="查找"/>
+					</form>
+				</div>
+			</div>
+			<div class="row">
+				<table id="simple-table" class="table  table-bordered table-hover">
+					<thead>
+						<tr>
+							<th>流程名称</th>
+							<th>标题</th>
+							<th>流程创建时间</th>
+							<th>工单状态</th>
+							<th>流程状态</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="item:${workSheets}">
+							<td th:text="${item.processName}"/>
+							<td th:text="${item.title}"/>
+							<td th:text="${#dates.format(item.createTime, 'yyyy/MM/dd HH:mm')}"/>		
+							<td th:text="${item.status}"></td>
+							<td th:text="${item.hasFiled?'已归档':'进行中'}"></td>
+							<td>
+								<div class="hidden-xs btn-group">
+									<button class="btn btn-xs btn-warning" th:onclick="|processStep('${item.id}')|" data-rel="tooltip" title="流程步骤">
+										<i class="ace-icon fa fa-list-ol bigger-120"></i>
+									</button>
+									
+									<button class="btn btn-xs btn-info" th:onclick="|sheetDetail('${item.id}')|" data-rel="tooltip" title="工单明细">
+										<i class="ace-icon fa fa-credit-card bigger-120"></i>
+									</button>
+
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>			
+				
+			</div>
+			
+			<div class="modal fade" id="processModal" tabindex="-2" role="dialog" aria-labelledby="processModalLabel">
+			  <div class="modal-dialog" role="document" style="width:635px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">流程步骤</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<table id="processes-table" ></table>
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+			<div class="modal fade" id="workSheetModal" tabindex="-2" role="dialog" aria-labelledby="workSheetModalLabel">
+			  <div class="modal-dialog" role="document" style="width:800px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">工单信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row">
+				  		<table id="worksheetTable" border="1" style="width:90%;margin-left:5%">
+							<tr>
+								<td class="workSheetTitle">部门名称</td>
+								<td id="deptName" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">联系人</td>
+								<td id="contacts" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">联系电话</td>
+								<td id="contactNumber" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">日期</td>
+								<td id="createTime" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">工单标题</td>
+								<td colspan="3" id="title" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">故障描述</td>
+								<td colspan="3" style="height:110px" id="situation" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">是否受理</td>
+								<td id="acceptAudit" class="workSheetInfo">&nbsp;</td>
+								<td class="workSheetTitle">受理人</td>
+								<td id="acceptor" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">受理意见</td>
+								<td colspan="3" style="height:110px" id="acceptRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">处理人</td>
+								<td colspan="3" id="executor" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">处理情况</td>
+								<td colspan="3" style="height:110px" id="exeRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">确认审批</td>
+								<td colspan="3" id="repaireConfirm" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">确认意见</td>
+								<td colspan="3" style="height:110px" id="repaireRemarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+							<tr>
+								<td class="workSheetTitle">备注</td>
+								<td colspan="3" style="height:110px" id="remarks" class="workSheetInfo">&nbsp;</td>
+							</tr>
+						</table>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+        </div>
+	</body>
+</html>

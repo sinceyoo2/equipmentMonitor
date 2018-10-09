@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:sec="html://www.thymeleaf.org/thymeleaf-extras-springsecurity4" 
+		xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+	<head>
+		<base th:href="@{/}"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta charset="utf-8" />
+
+		<meta http-equiv="pragma" content="private"/>
+		<meta name="description" content="" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+		<!-- bootstrap & fontawesome -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+
+		<!-- page specific plugin styles -->
+		<link rel="stylesheet" href="assets/css/jquery-ui.min.css" />
+		<link rel="stylesheet" href="assets/css/ui.jqgrid.min.css" />
+
+		<!-- text fonts -->
+		<link rel="stylesheet" href="assets/css/fonts.googleapis.com.css" />
+
+		<!-- ace styles -->
+		<link rel="stylesheet" href="assets/css/ace.min.css" class="ace-main-stylesheet" id="main-ace-style" />
+
+		<!--[if lte IE 9]>
+			<link rel="stylesheet" href="assets/css/ace-part2.min.css" class="ace-main-stylesheet" />
+		<![endif]-->
+		<link rel="stylesheet" href="assets/css/ace-skins.min.css" />
+		<link rel="stylesheet" href="assets/css/ace-rtl.min.css" />
+
+		<!--[if lte IE 9]>
+		  <link rel="stylesheet" href="assets/css/ace-ie.min.css" />
+		<![endif]-->
+
+		<!-- inline styles related to this page -->
+
+		<!-- ace settings handler -->
+		<script src="assets/js/ace-extra.min.js"></script>
+
+		<!-- HTML5shiv and Respond.js for IE8 to support HTML5 elements and media queries -->
+
+		<!--[if lte IE 8]>
+		<script src="assets/js/html5shiv.min.js"></script>
+		<script src="assets/js/respond.min.js"></script>
+		<![endif]-->
+		
+		<!--[if !IE]> -->
+		<script src="assets/js/jquery-2.1.4.min.js"></script>
+
+		<!-- <![endif]-->
+
+		<!--[if IE]>
+		<script src="assets/js/jquery-1.11.3.min.js"></script>
+		<![endif]-->
+		
+		<script src="assets/js/bootbox.js"></script>
+		
+		<style type="text/css">
+			body {  
+               padding-right: 0px !important;   
+	       	}  
+		   	*.modal-open {  
+			   overflow-y: scroll;  
+			   padding-right: 0 !important;  
+		   	} 
+		</style>
+		
+	</head>
+
+	<body class="no-skin">
+		<div id="navbar" class="navbar navbar-default ace-save-state" >
+			<div class="navbar-container ace-save-state" id="navbar-container">
+				<button type="button" class="navbar-toggle menu-toggler pull-left" id="menu-toggler" data-target="#sidebar">
+					<span class="sr-only">Toggle sidebar</span>
+
+					<span class="icon-bar"></span>
+
+					<span class="icon-bar"></span>
+
+					<span class="icon-bar"></span>
+				</button>
+
+				<div class="navbar-header pull-left">
+					<a href="index.html" class="navbar-brand">
+						<small>
+							<i class="fa fa-cogs"></i>
+							&nbsp;图书馆设备及应用集中监控系统
+						</small>
+					</a>
+				</div>
+
+				<div class="navbar-buttons navbar-header pull-right" role="navigation">
+					<ul class="nav ace-nav">
+						<li class="grey dropdown-modal">
+							<a data-toggle="dropdown" class="dropdown-toggle" href="#">
+<!-- 								<i class="ace-icon fa fa-tasks"></i> -->
+								<i class="ace-icon fa fa-bell icon-animated-bell"></i>
+								<span class="badge badge-grey" id="totalWarningCount">4</span>
+							</a>
+
+							<ul class="dropdown-menu-right dropdown-navbar dropdown-menu dropdown-caret dropdown-close">
+								<li class="dropdown-header">
+<!-- 									<i class="ace-icon fa fa-check"></i> -->
+									<i class="ace-icon fa fa-exclamation-triangle"></i>
+									<span id="totalWarningCount2">0</span> 个未处理故障通知
+								</li>
+
+								<li class="dropdown-content">
+									<ul class="dropdown-menu dropdown-navbar" id="warningList">
+										
+									</ul>
+								</li>
+
+								<li class="dropdown-footer">
+									<a href="errMsg?status=发现故障">
+										查看详细
+										<i class="ace-icon fa fa-arrow-right"></i>
+									</a>
+								</li>
+							</ul>
+						</li>
+
+
+						<li class="light-blue dropdown-modal">
+							<a data-toggle="dropdown" href="#" class="dropdown-toggle">
+<!-- 								<img class="nav-user-photo" src="assets/images/avatars/user.jpg" alt="Jason's Photo" /> -->
+								<img class="nav-user-photo" src="assets/images/avatars/user.jpg" alt="Photo" />
+								<span class="user-info">
+									<small>欢迎登录,</small>
+									<span th:text="${session.loginUser.name}">管理员</span>
+								</span>
+
+								<i class="ace-icon fa fa-caret-down"></i>
+							</a>
+
+							<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+								<li>
+									<a href="javascript:updatePwd()">
+										<i class="ace-icon fa fa-cog"></i>
+										修改密码
+									</a>
+								</li>
+
+								<li class="divider"></li>
+
+								<li>
+									<a href="logout">
+										<i class="ace-icon fa fa-power-off"></i>
+										退出
+									</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div><!-- /.navbar-container -->
+		</div>
+
+		<div class="main-container ace-save-state" id="main-container">
+			<script type="text/javascript">
+				try{ace.settings.loadState('main-container')}catch(e){}
+			</script>
+
+			<div id="sidebar" class="sidebar                  responsive                    ace-save-state">
+				
+
+				<ul class="nav nav-list">
+					<li class="active" sign="index">
+						<a href="index">
+							<i class="menu-icon fa fa-tachometer"></i>
+							<span class="menu-text"> 控制台 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+					<li class="" sign="collect">
+						<a href="equipment/collect">
+							<i class="menu-icon fa fa-cloud-download"></i>
+							<span class="menu-text"> 数据采集 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+					<li class="" sign="data">
+						<a href="#" class="dropdown-toggle">
+							<i class="menu-icon fa  fa-filter"></i>
+							<span class="menu-text"> 数据处理 </span>
+
+							<b class="arrow fa fa-angle-down"></b>
+						</a>
+
+						<b class="arrow"></b>
+						
+						<ul class="submenu">
+							<li class="" sign="planMap">
+								<a href="plan/map">
+									<i class="menu-icon fa fa-caret-right"></i>
+									室内地图
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+						
+							<li class="" sign="engineData">
+								<a href="equipment/engineRoom">
+									<i class="menu-icon fa fa-caret-right"></i>
+									机房概况
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="libData">
+								<a href="lib_map">
+									<i class="menu-icon fa fa-caret-right"></i>
+									地图分布
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+						</ul>
+					</li>
+					<li class="" sign="errQuery">
+						<a href="errMsg">
+							<i class="menu-icon fa fa-exclamation-circle"></i>
+							<span class="menu-text"> 故障查询 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+					<li class="" sign="article">
+						<a href="article">
+							<i class="menu-icon fa fa-flask"></i>
+							<span class="menu-text"> 故障知识库 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+					
+					<li class="" sign="errReport">
+						<a href="#" class="dropdown-toggle">
+							<i class="menu-icon fa  fa-bar-chart-o"></i>
+							<span class="menu-text"> 统计报表 </span>
+
+							<b class="arrow fa fa-angle-down"></b>
+						</a>
+
+						<b class="arrow"></b>
+						
+						<ul class="submenu">
+							<li class="" sign="total">
+								<a href="errReport/report/total">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障总量统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="duration">
+								<a href="errReport/report/duration">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障总量及历时统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="cause">
+								<a href="errReport/report/cause">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障原因分类统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="type">
+								<a href="errReport/report/type">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障专业类型统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="dept">
+								<a href="errReport/report/dept">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障申告单位统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="level">
+								<a href="errReport/report/level">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障级别统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="active">
+								<a href="errReport/report/active">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障主动发现率统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="troubleshooter">
+								<a href="errReport/report/troubleshooter">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障申告者统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="declare">
+								<a href="errReport/report/declare">
+									<i class="menu-icon fa fa-caret-right"></i>
+									故障申告方式统计
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+						</ul>
+					</li>
+					
+					<li class="" sign="myOrder">
+						<a href="#" class="dropdown-toggle">
+							<i class="menu-icon fa  fa-credit-card"></i>
+							<span class="menu-text"> 我的工单 </span>
+
+							<b class="arrow fa fa-angle-down"></b>
+						</a>
+
+						<b class="arrow"></b>
+						
+						<ul class="submenu">
+							<li class="" sign="100101">
+								<a href="kyle/page?id=100101">
+									<i class="menu-icon fa fa-caret-right"></i>
+									待办工作
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="100102">
+								<a href="kyle/page?id=100102">
+									<i class="menu-icon fa fa-caret-right"></i>
+									待阅工作
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="100103">
+								<a href="kyle/page?id=100103">
+									<i class="menu-icon fa fa-caret-right"></i>
+									已办工作
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="100104">
+								<a href="kyle/page?id=100104">
+									<i class="menu-icon fa fa-caret-right"></i>
+									已阅工作
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="100105">
+								<a href="kyle/page?id=100105">
+									<i class="menu-icon fa fa-caret-right"></i>
+									发起流程
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+						</ul>
+					</li>
+
+					<li class="" sign="monitor">
+						<a href="#" class="dropdown-toggle">
+							<i class="menu-icon fa  fa-eye"></i>
+							<span class="menu-text"> 应用监控 </span>
+
+							<b class="arrow fa fa-angle-down"></b>
+						</a>
+
+						<b class="arrow"></b>
+
+						<ul class="submenu">
+							<li class="" sign="hostMonitor">
+								<a href="hostMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									操作系统监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+
+							<li class="" sign="dbMonitor">
+								<a href="dbMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									数据库监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+
+							<li class="" sign="middlewareMonitor">
+								<a href="middlewareMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									中间件监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+
+							<li class="" sign="webMonitor">
+								<a href="webMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									Web服务器监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+
+							<li class="" sign="portMonitor">
+								<a href="portMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									网站端口监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="pingMonitor">
+								<a href="pingMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									ping监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="switchMonitor">
+								<a href="switchMonitor">
+									<i class="menu-icon fa fa-caret-right"></i>
+									交换机监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+							
+							<li class="" sign="intelligentMonitor">
+								<a href="intelligent">
+									<i class="menu-icon fa fa-caret-right"></i>
+									智能馆设备监控
+								</a>
+
+								<b class="arrow"></b>
+							</li>
+						</ul>
+					</li>
+					
+					<li class="" sign="user" sec:authorize="hasRole('ROLE_ADMIN')">
+						<a href="user/users">
+							<i class="menu-icon fa fa-users"></i>
+							<span class="menu-text"> 用户管理 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+					
+					<li class="" sign="sysLog" sec:authorize="hasRole('ROLE_ADMIN')">
+						<a href="sysLog">
+							<i class="menu-icon fa fa-book"></i>
+							<span class="menu-text"> 日志管理 </span>
+						</a>
+
+						<b class="arrow"></b>
+					</li>
+				</ul><!-- /.nav-list -->
+
+				<div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse">
+					<i id="sidebar-toggle-icon" class="ace-icon fa fa-angle-double-left ace-save-state" data-icon1="ace-icon fa fa-angle-double-left" data-icon2="ace-icon fa fa-angle-double-right"></i>
+				</div>
+			</div>
+
+			<div class="main-content">
+				<div class="main-content-inner">
+					<div class="breadcrumbs ace-save-state" id="breadcrumbs">
+						<ul layout:fragment="breadcrumbs" class="breadcrumb">
+
+						</ul><!-- /.breadcrumb -->
+
+<!-- 						<div class="nav-search" id="nav-search"> -->
+<!-- 							<form class="form-search"> -->
+<!-- 								<span class="input-icon"> -->
+<!-- 									<input type="text" placeholder="查找 ..." class="nav-search-input" id="nav-search-input" autocomplete="off" /> -->
+<!-- 									<i class="ace-icon fa fa-search nav-search-icon"></i> -->
+<!-- 								</span> -->
+<!-- 							</form> -->
+<!-- 						</div>/.nav-search -->
+					</div>
+
+					<div class="page-content">
+						<div class="row">
+							<div class="col-xs-12" layout:fragment="content">
+								<!-- PAGE CONTENT BEGINS -->
+
+								<!-- PAGE CONTENT ENDS -->
+							</div><!-- /.col -->
+						</div><!-- /.row -->
+					</div><!-- /.page-content -->
+				</div>
+			</div><!-- /.main-content -->
+
+			<div class="footer">
+				<div class="footer-inner">
+					<div class="footer-content">
+						<span class="bigger-120">
+							图书馆设备及应用集中监控系统 &copy; 2017-2018
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<a href="#" id="btn-scroll-up" class="btn-scroll-up btn btn-sm btn-inverse">
+				<i class="ace-icon fa fa-angle-double-up icon-only bigger-110"></i>
+			</a>
+		</div><!-- /.main-container -->
+		
+		<div class="modal fade" id="pwdModal" tabindex="-2" role="dialog" aria-labelledby="pwdModalLabel">
+		  <div class="modal-dialog" role="document" style="width:450px">
+		    <div class="modal-content">    
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title">修改密码</h4>
+		      </div>
+		      <div class="modal-body">		      	
+		      	<form id="pwdForm" action="user/updatePassword" method="post" class="form-horizontal" role="form">
+			  	<div class="row" style="padding:5px 5px">
+			  		<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right" for="oldPassword"> 旧密码 </label>
+						<div class="col-sm-10">
+							<input type="password" id="oldPassword" name="oldPassword" placeholder="旧密码" class="col-sm-11"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right" for="newPassword"> 新密码 </label>
+						<div class="col-sm-10">
+							<input type="password" id="newPassword" name="newPassword" placeholder="新密码 " class="col-sm-11"/>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-2 control-label no-padding-right" for="confirmPassword"> 确认密码 </label>
+						<div class="col-sm-10">
+							<input type="password" id="confirmPassword" placeholder="确认密码" class="col-sm-11"/>
+						</div>
+					</div>
+			  	</div>
+			  	</form>
+		      </div>
+		      <div class="modal-footer">
+				<button id="createScheduling" type="button" class="btn btn-primary" onclick="doUpdatePwd()">修改密码</button>
+		      </div>	      
+		    </div><!-- /.modal-content -->
+		  </div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+		
+		<!-- basic scripts -->
+
+		
+		<script type="text/javascript">
+		/*<![CDATA[*/
+			if('ontouchstart' in document.documentElement) document.write("<script src='assets/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");
+		/*]]>*/
+		</script>
+		<script src="assets/js/bootstrap.min.js"></script>
+		
+		<script src="assets/js/myjs/md5.min.js"></script>
+		<script language="javascript" th:inline="javascript">
+		/*<![CDATA[*/
+			$(function() {
+// 				alert(nav + "---" + subnav);
+				if(nav!=null && nav!='') {
+					$(".nav-list li").removeClass("active");
+					$(".nav-list li[sign='"+nav+"']").addClass("active");
+				}
+				if(subnav!=null && subnav!='') {
+					$(".nav-list li[sign='"+nav+"']").addClass("open");
+					$(".nav-list li[sign='"+subnav+"']").addClass("active");
+				}
+				findWarning();
+				
+			});
+		
+			function findWarning() {
+				$.ajax({url:'api/errorMessage/warningErr', data:{pageNo:1, pageSize:10}, success:function(page){
+					$("#totalWarningCount").text(page.totalElements);
+					$("#totalWarningCount2").text(page.totalElements);
+					var html = "";
+					for(var i=0; i<page.content.length; i++) {
+						var item = page.content[i];
+						var summary = item.summary.length>23?item.summary.substr(0,23)+'...':item.summary;
+						var btnColor = item.errorLevel==1?'btn-info':item.errorLevel==2?'btn-warning':'btn-danger';
+						var icon = item.declareType=='监控发现'?'fa-eye':item.declareType=='读者申告'?'fa-user':'fa-credit-card';
+						html += '<li>'+
+									'<a href="javascript:void(0)">'+
+										'<div class="clearfix">'+
+											'<span class="pull-left">'+
+												'<i class="btn btn-xs no-hover '+btnColor+' fa '+icon+'"></i>'+
+												'&nbsp;&nbsp;'+summary+
+											'</span>'+
+										'</div>'+
+									'</a>'+
+								'</li>';
+					}
+					$("#warningList").html(html);
+				}});
+			}
+			
+			function updatePwd(){
+				$("#pwdModal").modal('show');
+			}
+			
+			function doUpdatePwd() {
+				var newPwd = $("#newPassword").val();
+				if(newPwd==null || $.trim(newPwd)=="") {
+					alert("请输入新密码");
+					return;
+				}
+				var oldPwd = $("#oldPassword").val();
+				if(oldPwd==null || $.trim(oldPwd)=="") {
+					alert("请输入旧密码");
+					return;
+				}
+				var confirmPwd = $("#confirmPassword").val();
+				if(confirmPwd!=newPwd) {
+					alert("确认密码与新密码不一致");
+					return;
+				}
+				
+				var flag = confirm("确定要修改您的密码吗?");
+				if(!flag) {
+					return;
+				}
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				
+				$.ajax({url:'user/updatePassword', type:'post', data:{newPassword:md5(newPwd), oldPassword:md5(oldPwd)}, success:function(rest){
+					loading.modal('hide');
+					alert(rest);
+					$("#pwdModal").modal('hide');
+				}});
+			}
+		/*]]>*/
+		</script>
+
+		<!-- page specific plugin scripts -->
+
+		<!-- ace scripts -->
+		<script src="assets/js/ace-elements.min.js"></script>
+		<script src="assets/js/ace.min.js"></script>
+
+		<!-- inline scripts related to this page -->
+	</body>
+</html>

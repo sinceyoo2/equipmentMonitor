@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+	
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&amp;ak=tt6rcQmrH14iHBxr9aZrLv6BK2WGzowm"></script>
+<!-- 		 <script src="http://api.map.baidu.com/api?v=1.4" type="text/javascript"></script> -->
+		
+		<script language="javascript">
+			var nav = "index";
+			var subnav;
+			
+			$(function() {
+				$("#map1").height($(window).height()-200);
+				
+				var map = new BMap.Map("map1");
+		        map.centerAndZoom(new BMap.Point(121.491, 31.233), 11);
+		        
+		        map.centerAndZoom("佛山",12);                
+		    	map.enableScrollWheelZoom();   //启用滚轮放大缩小，默认禁用
+		    	map.enableContinuousZoom();    //启用地图惯性拖拽，默认禁用
+		        
+		        var top_left_navigation = new BMap.NavigationControl();  //左上角，添加默认缩放平移控件
+		    	var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_TOP_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL}); //右上角，仅包含平移和缩放按钮
+		    	map.addControl(top_left_navigation);     
+				map.addControl(top_right_navigation);
+			});			
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">应用监控</a>
+			</li>
+			<li class="active">map</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="page-header">
+				<h1>
+					监控配置
+					<small>
+						<i class="ace-icon fa fa-angle-double-right"></i>
+						主机监控配置列表
+					</small>
+				</h1>
+			</div>
+			<div class="row">
+				<div id="map1" style="width:100%;height:800px;"></div>  
+			</div>
+        </div>
+	</body>
+</html>

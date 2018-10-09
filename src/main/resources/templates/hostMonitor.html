@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<link rel="stylesheet" href="assets/css/jquery-ui.custom.min.css" />
+		<link rel="stylesheet" href="assets/css/chosen.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-datepicker3.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-timepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/daterangepicker.min.css" />
+		<link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css" />
+		
+		<script src="assets/js/myjs/echarts.min.js"></script>
+		<script src="assets/js/myjs/macarons.js"></script>
+		
+		<script src="assets/js/myjs/gauge.js-1.3.6/dist/gauge.js"></script>
+		<script src="assets/js/myjs/hostMonitor.js"></script>
+		
+		<script src="assets/js/jquery.jqGrid.min.js"></script>
+		<script src="assets/js/grid.locale-en.js"></script>
+		
+		<script src="assets/js/bootstrap-datepicker.min.js"></script>
+		<script src="assets/js/bootstrap-timepicker.min.js"></script>
+		<script src="assets/js/moment.min.js"></script>
+		<script src="assets/js/bootstrap-datepicker-1.8.0-dist/locales/bootstrap-datepicker.zh-CN.min.js"></script>
+		<script src="assets/js/moment-2.22.1/locale/zh-cn.js"></script>
+		
+		<script src="assets/js/bootstrap-datetimepicker.min.js"></script>
+		
+		<style type="text/css">
+			@font-face {
+			  font-family: 'iconfont';
+			  src: url('assets/css/mycss/fonts/iconfont.eot');
+			  src: url('assets/css/mycss/fonts/iconfont.eot?#iefix') format('embedded-opentype'),
+			  url('assets/css/mycss/fonts/iconfont.woff') format('woff'),
+			  url('assets/css/mycss/fonts/iconfont.ttf') format('truetype'),
+			  url('assets/css/mycss/fonts/iconfont.svg#iconfont') format('svg');
+			}
+			.iconfont{
+			  font-family:"iconfont" !important;
+			  font-size:16px;font-style:normal;
+			  -webkit-font-smoothing: antialiased;
+			  -webkit-text-stroke-width: 0.2px;
+			  -moz-osx-font-smoothing: grayscale;
+			}
+		</style>
+
+		<script language="javascript">
+			var nav = "monitor";
+			var subnav = "hostMonitor";
+			
+			jQuery(function($) {
+				
+				if(!ace.vars['old_ie']) $('#start, #end').datetimepicker({
+					 //format: 'MM/DD/YYYY h:mm:ss A',//use this option to display seconds
+					// language:  'zh-CN', 
+					 icons: {
+						time: 'fa fa-clock-o',
+						date: 'fa fa-calendar',
+						up: 'fa fa-chevron-up',
+						down: 'fa fa-chevron-down',
+						previous: 'fa fa-chevron-left',
+						next: 'fa fa-chevron-right',
+						today: 'fa fa-arrows ',
+						clear: 'fa fa-trash',
+						close: 'fa fa-times'
+					 }
+					}).next().on(ace.click_event, function(){
+						$(this).prev().focus();
+					});
+
+				
+			});
+
+			$(function() {
+				
+				$("#monitorMain").resize(function(){
+					if(monitorIp!=null) {
+						initAll(monitorIp, 'cpuChart', 'memoryChart', 'networkChart', 'diskChart', 'cpuGauge', 'memoryGauge', 'light');
+					}
+					
+					
+				});
+
+				
+				$("#processes-table").jqGrid({
+					//url:'hostMonitor/processes?ip=192.168.1.100',
+					//datatype: "json",  		
+					height: 550,
+					colNames:['PID','用户','开始时间','内存大小','内存使用','共享内存','状态','运行时间','名称'],
+					colModel:[
+						{name:'pid',index:'pid', width:60, sorttype:"int"},
+						{name:'user',index:'user', width:100},
+						{name:'startTime',index:'startTime', width:80},
+						{name:'memSize',index:'memSize', width:80},
+						{name:'memUse',index:'memUse', width:80},
+						{name:'memShare',index:'memShare', width:80}, 
+						{name:'state',index:'state', width:50}, 
+						{name:'cpuTime',index:'cpuTime', width:80}, 
+						{name:'name',index:'name', width:360}
+					],
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+				
+				$("#service-table").jqGrid({
+					height: 550,
+					colNames:['名称','程序','状态','描述','详细描述'],
+					colModel:[
+						{name:'name',index:'name', width:160},
+						{name:'exe',index:'exe', width:240},
+						{name:'status',index:'status', width:50}, 
+						{name:'displayName',index:'displayName', width:250},  
+						{name:'description',index:'description', width:270}
+					],
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+				
+				$("#error-table").jqGrid({
+					//height: 350,
+					colNames:['监控项','消息类别','监控时间','描述','详细描述'],
+					colModel:[
+						{name:'errorName',index:'errorName', width:160},
+						{name:'msgType',index:'msgType', width:70, align:'right', cellattr:addCellAttr, formatter:msgTypeFormatter},
+						{name:'time',index:'time', width:140, formatter:dateFormatter}, 
+						{name:'shortMsg',index:'shortMsg', width:230},  
+						{name:'msg',index:'msg', width:370}
+					],
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+				
+			});	
+			
+			function addCellAttr(rowId, val, rawObject, cm, rdata) {
+	            if(true){
+	                return "style='color:red'";
+	            }
+	        }
+			
+			function msgTypeFormatter(cellvalue, options, rowObject){  
+				if(cellvalue=='error') {
+					return '<span class="label label-sm label-warning arrowed-in">故障</span>';  
+				}
+				return '<span class="label label-sm label-success arrowed">恢复</span>';  
+			    
+			}  
+			
+			function dateFormatter(cellvalue, options, rowObject) {
+				//return new Date(cellvalue);
+				return moment(new Date(cellvalue)).format('YYYY-MM-DD HH:mm:ss')
+			}
+			
+			
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">应用监控</a>
+			</li>
+			<li class="active">操作系统监控</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+			<div class="row" id="monitorMain">
+				<div class="col-sm-3 col-lg-large-12">
+<!-- 				<div class="col-xs-12 col-md-12 col-lg-5"> -->
+					<div class="widget-box widget-color-blue ui-sortable-handle" id="widget-box-2">
+		            	<div class="widget-header">
+							<h6 class="widget-title">监控主机</h6>
+		
+							<div class="widget-toolbar">
+								<a href="hostMonitor/hostConfig"  sec:authorize="hasRole('ROLE_ADMIN')">
+									<i class="ace-icon fa fa-cog white"></i>
+								</a>
+		
+								<a href="#" data-action="reload">
+									<i class="ace-icon fa fa-refresh white"></i>
+								</a>
+							</div>
+						</div>
+						<div class="widget-body">
+							<div class="widget-main no-padding">
+								<table class="table table-striped table-bordered table-hover">
+									<thead class="thin-border-bottom">
+										<tr>
+											<th>
+												<i class="ace-icon fa fa-user"></i>
+												IP
+											</th>
+		
+											<th>
+												<i>@</i>
+												名称
+											</th>
+										</tr>
+									</thead>
+		
+									<tbody>
+										<tr th:each="config:${configs}">
+											<td class="" th:text="${config.ipAddress}"/>
+											<td>
+												
+												<a th:href="|javascript:initAll('${config.ipAddress}', 'cpuChart', 'memoryChart', 'networkChart', 'diskChart', 'cpuGauge', 'memoryGauge', 'light')|" th:text="${config.hostName}"/>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-9">
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="widget-box ui-sortable-handle" id="cpu-widget-box">
+				            	<div class="widget-header">
+									<h6 class="widget-title">CPU</h6>
+				
+									<div class="widget-toolbar">
+										<a href="#" data-action="reload">
+											<i class="ace-icon fa fa-refresh"></i>
+										</a>
+									</div>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main no-padding" style="position:relative;">
+										<div id="cpuChart" style="width:100%;height:280px;"></div>
+										<canvas id="cpuGauge" style="width:100px;height:50px;position:absolute;right:15px;top:10px"></canvas>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+						<div class="col-sm-6">
+							<div class="widget-box ui-sortable-handle" id="cpu-widget-box">
+				            	<div class="widget-header">
+									<h6 class="widget-title">内存</h6>
+				
+									<div class="widget-toolbar">
+										<a href="#" data-action="reload">
+											<i class="ace-icon fa fa-refresh"></i>
+										</a>
+									</div>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main no-padding" style="position:relative;">
+										<div id="memoryChart" style="width:100%;height:280px;"></div>
+										<canvas id="memoryGauge" style="width:100px;height:50px;position:absolute;right:15px;top:10px"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="space"></div>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="widget-box ui-sortable-handle" id="cpu-widget-box">
+				            	<div class="widget-header">
+									<h6 class="widget-title">磁盘</h6>
+				
+									<div class="widget-toolbar">
+										<a href="#" data-action="reload">
+											<i class="ace-icon fa fa-refresh"></i>
+										</a>
+									</div>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main no-padding" style="position:relative;">
+										<div id="diskChart" style="width:100%;height:280px;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="widget-box ui-sortable-handle" id="cpu-widget-box">
+				            	<div class="widget-header">
+									<h6 class="widget-title">网络</h6>
+				
+									<div class="widget-toolbar">
+										<a href="#" data-action="reload">
+											<i class="ace-icon fa fa-refresh"></i>
+										</a>
+									</div>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main no-padding" style="position:relative;">
+										<div id="networkChart" style="width:100%;height:280px;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="space"></div>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="widget-box ui-sortable-handle" id="info-widget-box">
+				            	<div class="widget-header">
+									<h6 class="widget-title">主机信息</h6>
+				
+									<div class="widget-toolbar">
+										<a href="#" data-action="reload">
+											<i class="ace-icon fa fa-refresh"></i>
+										</a>
+									</div>
+								</div>
+								<div class="widget-body">
+									<div class="widget-main no-padding">
+										<div class="row">
+											<div class="col-sm-4" style="padding-left:35px">
+												<h3 class="row smaller lighter blue">
+													<span class="col-sm-10">
+														<i class="ace-icon fa fa-windows"></i>
+														主机信息
+														<button class="btn btn-minier btn-danger pull-right" onclick="showHistory()">故障</button>
+														<button class="btn btn-minier btn-warning pull-right" onclick="showHistory()">历史</button>
+														<button class="btn btn-minier btn-info pull-right" onclick="showService()">服务</button>
+														<button class="btn btn-minier btn-purple pull-right" onclick="showProcess()">进程</button>
+													</span>
+												</h3>
+												<div class="space"></div>
+												<ul class="list-unstyled" style="padding-left:15px">
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															计算机名称：	<span id="computerName">surface</span>
+														</p>
+													</li>
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															计算机全名：	<span id="computerFullName">surface</span>
+														</p>
+													</li>
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															操作系统：	<span id="osDescription">Microsoft Windows 10(x64)</span>
+														</p>
+													</li>
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															系统版本：	<span id="osVersion">6.1</span>
+														</p>
+													</li>
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															系统卖主：	<span id="osVendor">Microsoft</span>
+														</p>
+													</li>
+													<li>
+														<p>
+															<i class="ace-icon fa fa-caret-right blue"></i>
+															系统类型：	<span id="osName">Win32</span>
+														</p>
+													</li>
+												</ul>
+												<div class="space"></div>
+											</div>
+											<div class="col-sm-8" style="padding-top:15px;padding-right:35px">
+												<div class="tabbable">
+													<ul class="nav nav-tabs" id="myTab">
+														<li class="active">
+															<a data-toggle="tab" href="#cpuInfoTab">
+																<i class="blue bigger-120 iconfont">&#xe62b;</i>
+																CPU信息
+															</a>
+														</li>
+		
+														<li>
+															<a data-toggle="tab" href="#memoryInfoTab">
+																<i class="blue bigger-120 iconfont">&#xe630;</i>
+																内存信息
+															</a>
+														</li>
+														
+														<li>
+															<a data-toggle="tab" href="#networkInfoTab">
+																<i class="blue bigger-120 iconfont">&#xe6b3;</i>
+																网络信息
+															</a>
+														</li>
+													</ul>
+		
+													<div class="tab-content" style="border-width:1px;height:190px">
+														<div id="cpuInfoTab" class="tab-pane fade in active">
+															<p>CPU型号（芯片提供商）：<span id="cpu_model">-</span></p>
+															<p>用户使用率：<span id="cpu_user">-</span>%</p>
+															<p>系统使用率：<span id="cpu_sys">-</span>%</p>
+															<p>当前等待率：<span id="cpu_wait">-</span>%</p>
+															<p>当前错误率：<span id="cpu_nice">-</span>%</p>
+															
+														</div>
+		
+														<div id="memoryInfoTab" class="tab-pane fade">
+															<p>内存总量：<span id="mem_total">-</span></p>
+															<p>当前内存使用量/剩余量：<span id="mem_used">-</span></p>
+															<p>交换区总量：<span id="swap_total">-</span></p>
+															<p>交换区使用量/剩余量：<span id="swap_used">-</span></p>
+														</div>
+														
+														<div id="networkInfoTab" class="tab-pane fade">
+															<p>网络设备名（物理地址）：<span id="network_name">-</span></p>
+															<p>IP地址|子网掩码：<span id="network_ip">-</span></p>
+															<p>接收/发送的总包裹数：<span id="network_packets">-</span></p>
+															<p>接收/发送的总字节数：<span id="network_bytes">-</span></p>
+															<p>接收/发送时丢弃的包数：<span id="network_dropped">-</span></p>
+														</div>
+														
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>					
+					</div>
+				</div>
+			</div>
+			
+			<div class="modal fade" id="processModal" tabindex="-2" role="dialog" aria-labelledby="processModalLabel">
+			  <div class="modal-dialog" role="document" style="width:1000px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">系统进程</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<table id="processes-table" ></table>
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+			<div class="modal fade" id="serviceModal" tabindex="-2" role="dialog" aria-labelledby="serviceModalLabel">
+			  <div class="modal-dialog" role="document" style="width:1000px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">系统服务</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<table id="service-table" ></table>
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+			<div class="modal fade" id="historyModal" tabindex="-2" role="dialog" aria-labelledby="historyModalLabel">
+			  <div class="modal-dialog" role="document" style="width:1000px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">历史/故障</h4>
+			      </div>
+			      <div class="modal-body">		      	
+						<div class="row">
+							<div class="col-xs-6 col-sm-6">
+								<div class="input-group col-5">
+									<input id="start" type="text" class="form-control" th:value="${#dates.format(defaultStart, 'yyyy/MM/dd HH:mm')}" />
+									<span class="input-group-addon">
+										<i class="fa fa-exchange"></i>
+									</span>
+									<input id="end" type="text" class="form-control" th:value="${#dates.format(defaultEnd, 'yyyy/MM/dd HH:mm')}" />
+								</div>
+							</div>
+							<div class="col-xs-6 col-sm-6">
+								<button onclick="findHisAndErr()" class="btn btn-info btn-sm">
+									<i class="ace-icon glyphicon glyphicon-search align-top bigger-125"></i>
+									查找
+								</button>
+							</div>
+						</div>
+						
+						<hr/>
+						<label>
+							历史信息
+							&nbsp;&nbsp;&nbsp;&nbsp;
+						</label>
+						<label>
+							<input name="chartType" type="radio" class="ace" value="CPUInfo" checked="checked" onclick="findHis()"/>
+							<span class="lbl"> CPU</span>
+						</label>
+							&nbsp;&nbsp;
+						<label>
+							<input name="chartType" type="radio" class="ace" value="MemoryInfo" onclick="findHis()"/>
+							<span class="lbl"> 内存</span>
+						</label>
+							&nbsp;&nbsp;
+						<label>
+							<input name="chartType" type="radio" class="ace" value="DiskInfo" onclick="findHis()"/>
+							<span class="lbl"> 磁盘</span>
+						</label>
+							&nbsp;&nbsp;
+						<label>
+							<input name="chartType" type="radio" class="ace" value="NetworkInfo" onclick="findHis()"/>
+							<span class="lbl"> 网络</span>
+						</label>
+						<div class="space space-8"></div>	
+						<div id="historyChart" style="width:950px;height:280px;"></div>
+						<hr/>
+						<label>故障信息</label>
+						<div class="space space-8"></div>
+						<table id="error-table" ></table>									
+			      </div>
+			      <div class="modal-footer">
+			        
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+			
+        </div>
+	</body>
+</html>

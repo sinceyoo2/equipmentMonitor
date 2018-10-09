@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<style>
+			.list-unstyled li{position:relative;height:40px}
+			.pricing-table-header{line-height:40px}
+/* 			.server{position:absolute;height:24px;z-index:20000;width:98%;left:1%;bottom:20%} */
+/* 			.server-normal{border:#428BCA 1px solid;background:#6FB3E0;} */
+			.server{position:absolute;z-index:20000;width:98%;left:1%;}
+			.server-normal{border:#428BCA 1px solid;background:#6FB3E0;}
+		</style>
+		
+		<script language="javascript">
+		/*<![CDATA[*/ 
+			var nav = "index";
+			var subnav;
+			
+			var cabinets = [
+				{name:'机柜A1',code:'A1'}
+			];
+			
+			var servers = [
+				{name:'SOA应用服务器',cabinetName:'A1',startU:15,endU:18}
+			];
+			
+			$(function() {
+		        $(".pricing-span").remove();
+		        newCabinet(cabinets[0]);
+		        newServer(servers[0]);
+			});
+			
+			function newCabinet(cabinet) {
+				var html = '<div class="pricing-span" id="'+cabinet.code+'">'+
+								'<div class="widget-box pricing-box-small widget-color-red3">'+
+									'<div class="widget-header">'+
+										'<h5 class="widget-title bigger lighter">'+cabinet.name+'</h5>'+
+									'</div>'+
+									'<div class="widget-body">'+
+										'<div class="widget-main no-padding">'+
+											'<ul class="list-unstyled list-striped pricing-table">'+
+												'<li style="height:10px"></li>'+
+												'<li class="35u">&nbsp;</li>'+
+												'<li class="30u">&nbsp;</li>'+
+												'<li class="25u">&nbsp;</li>'+
+												'<li class="20u">&nbsp;</li>'+
+												'<li class="15u">&nbsp;</li>'+
+												'<li class="10u">&nbsp;</li>'+
+												'<li class="5u">&nbsp;</li>'+
+												'<li class="1u">&nbsp;</li>'+
+												'<li>&nbsp;</li>'+
+											'</ul>'+
+										'</div>'+
+										'<div>'+
+											'<a href="javascript:void(0)" class="btn btn-block btn-sm btn-danger"><span>&nbsp;</span></a>'+
+										'</div>'+
+									'</div>'+
+								'</div>'+
+							'</div>';
+				$(".pricing-span-body").append(html);
+			}
+			
+			function newServer(server) {
+				var height = (server.endU-server.startU)*8;
+				var bottom = server.startU%5*20;
+				var style = 'height:'+height+'px;bottom:'+bottom+'%';
+				var indexClass = parseInt(server.startU/5)*5+"u";
+				var html = '<div class="server server-normal" style="'+style+'"></div>';
+				$("#"+server.cabinetName+' .'+indexClass).append(html);
+			}
+		/*]]>*/	
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="#">应用监控</a>
+			</li>
+			<li class="active">操作系统监控</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <h3 class="header smaller red">Small Style</h3>
+			<div class="row">
+				<div class="col-xs-4 col-sm-3 pricing-span-header">
+					<div class="widget-box transparent">
+						<div class="widget-header">
+							<h5 class="widget-title bigger lighter">Package Name</h5>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main no-padding">
+								<ul class="list-unstyled list-striped pricing-table-header">
+									<li style="height:10px"></li>
+									<li>40u </li>
+									<li>35u </li>
+									<li>30u </li>
+									<li>25u </li>
+									<li>20u </li>
+									<li>15u </li>
+									<li>10u </li>
+									<li>5u </li>
+									<li>1u </li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-xs-8 col-sm-9 pricing-span-body">
+					<div class="pricing-span">
+						<div class="widget-box pricing-box-small widget-color-red3">
+							<div class="widget-header">
+								<h5 class="widget-title bigger lighter">机柜A1</h5>
+							</div>
+
+							<div class="widget-body">
+								<div class="widget-main no-padding">
+									<ul class="list-unstyled list-striped pricing-table">
+										<li></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;<div class="server server-normal"></div></li>
+										<li>&nbsp;<div class="server server-normal"></div></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+									</ul>
+								</div>
+
+								<div>
+									<a href="javascript:void(0)" class="btn btn-block btn-sm btn-danger">
+										<span>&nbsp;</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="pricing-span">
+						<div class="widget-box pricing-box-small widget-color-orange">
+							<div class="widget-header">
+								<h5 class="widget-title bigger lighter">机柜A2</h5>
+							</div>
+
+							<div class="widget-body">
+								<div class="widget-main no-padding">
+									<ul class="list-unstyled list-striped pricing-table">
+										<li></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+									</ul>
+								</div>
+
+								<div>
+									<a href="javascript:void(0)" class="btn btn-block btn-sm btn-warning">
+										<span>&nbsp;</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="pricing-span">
+						<div class="widget-box pricing-box-small widget-color-blue">
+							<div class="widget-header">
+								<h5 class="widget-title bigger lighter">机柜A3</h5>
+							</div>
+
+							<div class="widget-body">
+								<div class="widget-main no-padding">
+									<ul class="list-unstyled list-striped pricing-table">
+										<li></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;<div class="server server-normal"></div></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+									</ul>
+								</div>
+
+								<div>
+									<a href="javascript:void(0)" class="btn btn-block btn-sm btn-primary">
+										<span>&nbsp;</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="pricing-span">
+						<div class="widget-box pricing-box-small widget-color-green">
+							<div class="widget-header">
+								<h5 class="widget-title bigger lighter">机柜A4</h5>
+							</div>
+
+							<div class="widget-body">
+								<div class="widget-main no-padding">
+									<ul class="list-unstyled list-striped pricing-table">
+										<li></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+									</ul>
+								</div>
+
+								<div>
+									<a href="javascript:void(0)" class="btn btn-block btn-sm btn-success">
+										<span>&nbsp;</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="pricing-span">
+						<div class="widget-box pricing-box-small widget-color-grey">
+							<div class="widget-header">
+								<h5 class="widget-title bigger lighter">机柜A5</h5>
+							</div>
+
+							<div class="widget-body">
+								<div class="widget-main no-padding">
+									<ul class="list-unstyled list-striped pricing-table">
+										<li></li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+										<li>&nbsp;</li>
+									</ul>
+								</div>
+
+								<div>
+									<a href="javascript:void(0)" class="btn btn-block btn-sm btn-grey">
+										<span>&nbsp;</span>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div><!-- PAGE CONTENT ENDS -->
+        </div>
+	</body>
+</html>

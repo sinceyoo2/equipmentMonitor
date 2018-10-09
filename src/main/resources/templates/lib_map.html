@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+		xmlns:th="http://www.thymeleaf.org" 
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      	data-layout-decorator="layout/main">
+	<head>
+	
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		
+		<title>图书馆设备及应用集中监控系统</title>	
+		
+		<script src="assets/js/jquery.jqGrid.min.js"></script>
+		<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&amp;ak=tt6rcQmrH14iHBxr9aZrLv6BK2WGzowm"></script>
+<!-- 		 <script src="http://api.map.baidu.com/api?v=1.4" type="text/javascript"></script> -->
+
+		<style type="text/css">
+			.ace-settings-box.open{max-width:800px}
+			.ace-settings-box{border-color: #75B5E6}
+		</style>
+		
+		<script language="javascript">
+		/*<![CDATA[*/ 
+			var nav = "data";
+			var subnav = "libData";
+			
+			var map;
+			var opts = {
+				width : 250,     // 信息窗口宽度
+				//height: 80,     // 信息窗口高度
+				title : "信息窗口" , // 信息窗口标题
+				enableMessage:true//设置允许信息窗发送短息
+			};
+			
+			$(function() {
+				$("#map1").height($(window).height()-200);
+				$("#ace-settings-box").width($(window).width()*0.33).height($(window).height()-200);
+				var tableWidth = $(window).width()*0.33*0.94;
+				//alert(tableWidth);
+				$("#library-table").jqGrid({
+					//url:'hostMonitor/processes?ip=192.168.1.100',
+					//datatype: "json",  		
+					height: $(window).height()-280,
+					colNames:['编号','馆名','地址',''],
+					colModel:[
+						{name:'libNo',index:'libNo', width:tableWidth*0.1},
+						{name:'libName',index:'libName', width:tableWidth*0.3},
+						{name:'address',index:'address', width:tableWidth*0.5},
+						{name:'',index:'', formatter:optFormatter, width:tableWidth*0.1}
+					],
+					width:"100%",
+		            autowidth:true,
+					loadonce:true //一次加载全部数据到客户端，由客户端进行排序。
+			
+				});
+				
+				map = new BMap.Map("map1");
+		       // map.centerAndZoom(new BMap.Point(121.491, 31.233), 11);
+		        
+		        map.centerAndZoom("佛山",13);                
+		    	map.enableScrollWheelZoom();   //启用滚轮放大缩小，默认禁用
+		    	map.enableContinuousZoom();    //启用地图惯性拖拽，默认禁用
+		        
+		        var top_left_navigation = new BMap.NavigationControl();  //左上角，添加默认缩放平移控件
+		    	var top_right_navigation = new BMap.NavigationControl({anchor: BMAP_ANCHOR_TOP_RIGHT, type: BMAP_NAVIGATION_CONTROL_SMALL}); //右上角，仅包含平移和缩放按钮
+		    	map.addControl(top_left_navigation);     
+				map.addControl(top_right_navigation);
+				
+				findLibs();
+				
+			});		
+			
+			var libMap = {};
+			function findLibs() {
+				var libType = $("input[name='libType']:checked").val();
+				var vague = $("input[name='vague']").val();
+				var loading = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spin fa-spinner"></i> Loading...</div>' });
+				$.ajax({url:'lib_map/libs', type:'post', data:{libType:libType, vague:vague}, success:function(libs){
+					//alert(libs.length);
+					clearMarkers();
+					$("#library-table").jqGrid('clearGridData');  //清空表格
+					libMap = {};
+					for (var i = 0; i < libs.length; i ++) {
+						var lib = libs[i];
+						var point = new BMap.Point(lib.longitude, lib.latitude);
+						var marker = addMarker(point);
+						lib.marker = marker;
+						libMap[lib.libNo] = lib
+						//var content = lib.address+'<br/><a href="javascript:showDetail(\''+lib.libNo+'\')">详情>></a>';;
+						addClickHandler(lib.libNo);
+						
+						jQuery("#library-table").jqGrid('addRowData', i + 1, lib);
+					}
+					loading.modal('hide');
+					
+				}});
+			}
+			
+			function addMarker(point){
+			  var marker = new BMap.Marker(point);
+			  map.addOverlay(marker);
+			  return marker;
+			}
+			
+			function clearMarkers(){
+				var allOverlay = map.getOverlays();
+				for (var i = 0; i < allOverlay.length -1; i++){
+					map.removeOverlay(allOverlay[i]);
+				}
+			}
+			
+			function addClickHandler(libNo){
+				var lib = libMap[libNo];
+				var marker = lib.marker;
+				marker.addEventListener("click",function(e){
+					openInfo(libNo)}
+				);
+			}
+			
+			function openInfo(libNo){
+				//var p = e.target;
+				var lib = libMap[libNo];
+				var p = lib.marker;
+				var content = '<br/>办证量:'+lib.certificateCount+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;流通量:'+lib.circulateCount+'<br/>'
+								+'进馆人次:'+lib.visitorCount+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;馆藏量:'+lib.collectCount+'<br/><br/>';
+				if(lib.libType=='智能馆') {
+					content += '<br/>自助还书机:'+lib.selfBARStatus+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;硬盘录像机:'+lib.diskRecorderStatus+'<br/>'
+					+'门禁:'+lib.entranceGuardStatus+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;触屏一体机:'+lib.touchScreenStatus+'<br/>'
+					+'温湿度感应器:'+lib.temperatureSensorStatus+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;传感器:'+lib.sensorStatus+'<br/><br/>';
+				}
+				content+='地址:'+lib.address+'<br/><br/><a href="javascript:showDetail(\''+lib.libNo+'\')">详情>></a>';;
+				var point = new BMap.Point(p.getPosition().lng, p.getPosition().lat);
+				opts.title = lib.libName;
+				var infoWindow = new BMap.InfoWindow(content,opts);  // 创建信息窗口对象 
+				map.openInfoWindow(infoWindow,point); //开启信息窗口
+			}
+			
+			function optFormatter(cellvalue, options, rowObject) {
+				//return new Date(cellvalue);
+				return '<a href="javascript:theLocation(\''+rowObject.libNo+'\')">定位</a>';
+			}
+			
+			// 用经纬度设置地图中心点
+			function theLocation(libNo){
+				//alert(libMap[libNo].libName);
+				var lib = libMap[libNo];
+				openInfo(lib.libNo);
+				//map.panTo(lib.marker);
+				map.centerAndZoom(new BMap.Point(lib.longitude, lib.latitude),14);
+			}
+			
+			function showDetail(libNo) {
+				var lib = libMap[libNo];
+				if(lib!=null) {
+					$("#td_libNo").text(lib.libNo);
+					$("#td_libName").text(lib.libName);
+					$("#td_libCode").text(lib.libCode);
+					$("#td_address").text(lib.address);
+					$("#td_hotline").text(lib.hotline);
+					$("#td_website").text(lib.website);
+					$("#td_businessHour").text(lib.businessHour);
+					$("#td_trafficTips").text(lib.trafficTips);
+					$("#td_profiles").text(lib.profiles);
+					$("#td_mapInfo").text("百度地图坐标:"+lib.longitude+", "+lib.latitude);
+					$("#detailModal").modal('show');
+				}
+			}
+		/*]]>*/	
+		</script>
+	</head>
+
+	<body>
+		<ul layout:fragment="breadcrumbs" class="breadcrumb">
+			<li>
+				<i class="ace-icon fa fa-home home-icon"></i>
+				<a href="#">首页</a>
+			</li>
+
+			<li>
+				<a href="javascript:void(0)">数据处理</a>
+			</li>
+			<li class="active">地图分布情况</li>
+		</ul><!-- /.breadcrumb -->
+		
+		<div layout:fragment="content">
+            <!-- PAGE CONTENT BEGINS -->
+            <div class="ace-settings-container" id="ace-settings-container">
+				<div class="btn btn-app btn-xs btn-info ace-settings-btn" id="ace-settings-btn">
+					<i class="ace-icon fa fa-list bigger-130"></i>
+				</div>
+
+				<div class="ace-settings-box clearfix" id="ace-settings-box">
+					<div class="row" style="padding:15px">
+						<table id="library-table" style="width:100%" ></table>
+					</div>
+				</div><!-- /.ace-settings-box -->
+			</div><!-- /.ace-settings-container -->
+            <div class="page-header">
+            	<div class="row">
+            	<form class="form-horizontal" role="form" onsubmit="return false">
+           			<div class="radio" style="float:left;margin-right:25px">
+						<label>
+							<input name="libType" type="radio" class="ace" value="" checked="checked"/>
+							<span class="lbl"> 全局</span>
+						</label>
+						<label>
+							<input name="libType" type="radio" class="ace" value="master" />
+							<span class="lbl"> 主馆(<font th:text="${typeAmount['主馆']}"></font>)</span>
+						</label>
+						<label>
+							<input name="libType" type="radio" class="ace" value="member" />
+							<span class="lbl"> 普通成员馆(<font th:text="${typeAmount['成员馆']}"></font>)</span>
+						</label>
+						<label>
+							<input name="libType" type="radio" class="ace" value="intelligent" />
+							<span class="lbl"> 智能图书馆(<font th:text="${typeAmount['智能馆']}"></font>)</span>
+						</label>
+					</div>
+					<div class="input-group col-sm-3" style="float:left">	
+						<input name="vague" type="text" class="form-control search-query" placeholder="查找内容" />
+						<span class="input-group-btn">
+							<button type="button" class="btn btn-purple btn-sm" onclick="findLibs()">
+								<span class="ace-icon fa fa-search icon-on-right bigger-110"></span>
+								查找
+							</button>
+						</span>
+					</div>
+           		</form>	
+            	</div>				
+			</div>
+			<div class="row">
+				<div id="map1" style="width:100%;height:800px;"></div>  
+			</div>
+			
+			<div class="modal fade" id="detailModal" tabindex="-2" role="dialog" aria-labelledby="detailModalLabel">
+			  <div class="modal-dialog" role="document" style="width:650px">
+			    <div class="modal-content">
+			      <div class="modal-header">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title">详细信息</h4>
+			      </div>
+			      <div class="modal-body">		      	
+				  	<div class="row" style="padding:5px 5px">
+				  		<table id="simple-table" class="table  table-bordered table-hover">		
+							<tbody>
+								<tr>
+									<th style="width:150px">编号</th>
+									<td id="td_libNo">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>馆名称</th>
+									<td id="td_libName">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>馆管代码</th>
+									<td id="td_libCode">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>地址</th>
+									<td id="td_address">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>服务电话</th>
+									<td id="td_hotline">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>网址</th>
+									<td id="td_website">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>开放时间</th>
+									<td id="td_businessHour">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>交通提示</th>
+									<td id="td_trafficTips">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>地图定位</th>
+									<td id="td_mapInfo">&nbsp;</td>
+								</tr>
+								<tr>
+									<th>简介</th>
+									<td id="td_profiles">&nbsp;</td>
+								</tr>
+							</tbody>
+						</table>
+				  	</div>
+			      </div>
+			      <div class="modal-footer">
+
+			      </div>
+			    </div><!-- /.modal-content -->
+			  </div><!-- /.modal-dialog -->
+			</div><!-- /.modal -->
+        </div>
+	</body>
+</html>
