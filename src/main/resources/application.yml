@@ -36,10 +36,10 @@ spring:
       uri: mongodb://192.168.1.105:27017/monitor-error
       
   mail:
-    from-name: 627320115@qq.com
+    from-name: 111111111@qq.com
     host: smtp.qq.com
-    username: 627320115
-    password: xjkbnrqbepnpbech
+    username: 111111111
+    password: xxxxxxxx
     properties: 
       mail: 
         smtp: 
